@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       2. '공동주택관리법 시행령 제31조 제7항'을 강조하세요.
       3. 질문자의 '진짜 욕구'와 '불안'을 짚어주며 해결책을 제시하세요.
       4. 신뢰감 있는 전문가 톤을 유지하세요.`
-    });
+    } as any);
 
     const prompt = messages[messages.length - 1].content;
     const result = await model.generateContent(prompt);
