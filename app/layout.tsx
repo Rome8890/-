@@ -18,9 +18,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <PHProvider>
-        <body className={inter.className}>{children}</body>
-      </PHProvider>
+      <body className={inter.className}>
+        <PHProvider>
+          {children}
+        </PHProvider>
+      </body>
     </html>
   );
 }

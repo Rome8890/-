@@ -6,14 +6,15 @@ import { useEffect } from 'react';
 
 if (typeof window !== 'undefined') {
   const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  // US Cloud를 위해 더 정확한 주소로 변경
   const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
   
+  console.log('PostHog Debug:', { hasKey: !!posthogKey, host: posthogHost });
+
   if (posthogKey) {
     posthog.init(posthogKey, {
       api_host: posthogHost,
-      person_profiles: 'always', // 최신 포스트호그 사양 반영
-      capture_pageview: true // 자동 페이지뷰 캡처 활성화
+      person_profiles: 'always',
+      capture_pageview: true
     });
   }
 }
