@@ -7,6 +7,10 @@ export async function POST(request: Request) {
   try {
     const { messages, legalInfo } = await request.json();
     
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured on the server.');
+    }
+
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-1.5-flash',
       systemInstruction: `당신은 부동산 법률 전문가 '장충금 헌터'입니다. 
@@ -29,7 +33,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ content: response.text() });
 
   } catch (error: any) {
-    console.error('Chat API Error:', error);
+    console.error('Chat API Detailed Error:', {
+      message: error.message,
+      stack: error.stack,
+      envKeyExists: !!process.env.GEMINI_API_KEY
+    });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

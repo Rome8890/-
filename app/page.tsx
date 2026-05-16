@@ -82,16 +82,24 @@ export default function JangChungGeumApp() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, legalInfo })
+        body: JSON.stringify({ messages: newMessages, legalInfo: legalInfo || "No legal info available" })
       });
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       setChatMessages([...newMessages, { role: 'ai', content: data.content }]);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Chat UI Error:', err);
+      setChatMessages([...newMessages, { role: 'ai', content: `죄송합니다. 오류가 발생했습니다: ${err.message}` }]);
     }
   };
 
   const handleDownloadPDF = (type: 'PROOF' | 'BASIS') => {
+    try {
+      track('click_download', { type });
+    } catch (e) {
+      console.warn('Tracking failed but continuing...', e);
+    }
+
     if (!isPaid) {
       setStep('PAYMENT');
       return;
