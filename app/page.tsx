@@ -56,6 +56,8 @@ export default function JangChungGeumApp() {
   const [legalInfo, setLegalInfo] = useState<string | null>(null);
   const { track, trackPageView } = useTracker();
 
+  const [isPaid, setIsPaid] = useState(false);
+
   useEffect(() => {
     trackPageView(step);
     if (step === 'ANALYZING' || step === 'CHAT') {
@@ -86,6 +88,25 @@ export default function JangChungGeumApp() {
       setChatMessages([...newMessages, { role: 'ai', content: data.content }]);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleDownloadPDF = (type: 'PROOF' | 'BASIS') => {
+    if (!isPaid) {
+      setStep('PAYMENT');
+      return;
+    }
+    
+    if (type === 'PROOF') {
+      generateContentProof({
+        apartment: '잠실 헬리오시티',
+        amount: '648,200',
+        period: '24개월',
+        userName: '대표님',
+        landlordName: '집주인 귀하'
+      });
+    } else {
+      generateLegalBasis(legalInfo || "해당 법령 정보가 없습니다.");
     }
   };
 
@@ -144,11 +165,11 @@ export default function JangChungGeumApp() {
               </button>
               <h2 className="text-3xl font-black">환급금 계산</h2>
               <div className="space-y-4">
-                <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm focus-within:ring-2 focus-within:ring-[#00A3FF]">
                   <p className="text-[10px] font-black text-[#00A3FF] uppercase mb-2">Apartment</p>
                   <input type="text" placeholder="아파트 이름" className="w-full text-xl font-bold border-none p-0 focus:ring-0 bg-transparent" />
                 </div>
-                <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm focus-within:ring-2 focus-within:ring-[#00A3FF]">
                   <p className="text-[10px] font-black text-[#00A3FF] uppercase mb-2">Period</p>
                   <input type="text" placeholder="거주 기간 (예: 24개월)" className="w-full text-xl font-bold border-none p-0 focus:ring-0 bg-transparent" />
                 </div>
@@ -176,13 +197,7 @@ export default function JangChungGeumApp() {
                 <h2 className="text-6xl font-black text-[#00A3FF] mb-2">648,200원</h2>
                 <LegalAnalysisTool legalInfo={legalInfo} amount={648200} />
               </GlassCard>
-              <PrimaryButton onClick={() => generateContentProof({
-                apartment: '잠실 헬리오시티',
-                amount: '648,200',
-                period: '24개월',
-                userName: '대표님',
-                landlordName: '집주인 귀하'
-              })} className="w-full py-6">
+              <PrimaryButton onClick={() => handleDownloadPDF('PROOF')} className="w-full py-6">
                 내용증명 PDF 생성하기
               </PrimaryButton>
               <button onClick={() => setStep('HOME')} className="w-full text-center text-gray-400 font-bold">홈으로 이동</button>
@@ -196,7 +211,7 @@ export default function JangChungGeumApp() {
                 <button onClick={() => setStep('HOME')} className="p-2 bg-white rounded-full shadow-sm"><ArrowLeft className="w-5 h-5" /></button>
                 <h2 className="text-xl font-black">법령 상담소</h2>
                 <button 
-                  onClick={() => generateLegalBasis(legalInfo || "해당 법령 정보가 없습니다.")}
+                  onClick={() => handleDownloadPDF('BASIS')}
                   className="p-2 bg-white rounded-full shadow-sm text-[#00A3FF]"
                 >
                   <FileText className="w-5 h-5" />
@@ -231,6 +246,47 @@ export default function JangChungGeumApp() {
                 />
                 <button onClick={handleSendMessage} className="w-12 h-12 bg-[#00A3FF] rounded-2xl flex items-center justify-center text-white shadow-lg">
                   <Send className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* PAYMENT SCREEN */}
+          {step === 'PAYMENT' && (
+            <motion.div 
+              key="payment"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              className="fixed inset-0 z-50 bg-black/80 flex items-end justify-center p-4 backdrop-blur-md"
+            >
+              <div className="bg-white w-full max-w-md rounded-[40px] p-8 space-y-8 shadow-2xl">
+                <div className="space-y-2">
+                  <h3 className="text-3xl font-black">프리미엄 문서 발급</h3>
+                  <p className="text-gray-400 font-medium">단돈 2,900원으로 수십만원의 권리를 되찾으세요.</p>
+                </div>
+
+                <div className="space-y-3">
+                  <button 
+                    onClick={() => {
+                      track('payment_success');
+                      setIsPaid(true);
+                      setStep('RESULT');
+                      alert('결제가 완료되었습니다! 이제 문서를 다운로드하실 수 있습니다.');
+                    }}
+                    className="w-full bg-[#FEE500] text-[#3c1e1e] font-black py-5 rounded-2xl flex items-center justify-center gap-2 hover:bg-[#FADA00] transition-colors"
+                  >
+                    카카오페이로 1초 결제
+                  </button>
+                  <button className="w-full bg-[#0064FF] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 hover:bg-[#0052D1] transition-colors">
+                    토스페이로 결제
+                  </button>
+                </div>
+                
+                <button 
+                  onClick={() => setStep('HOME')}
+                  className="w-full text-center text-gray-400 font-bold text-sm"
+                >
+                  다음에 할게요
                 </button>
               </div>
             </motion.div>

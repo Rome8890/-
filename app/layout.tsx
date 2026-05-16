@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: '이사할 때 못 받은 장기수선충당금, 10초 만에 분석하고 돌려받으세요.',
 };
 
+import { PHProvider } from './providers';
+
 export default function RootLayout({
   children,
 }: {
@@ -16,7 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className={inter.className}>{children}</body>
+      <PHProvider>
+        <body className={inter.className}>{children}</body>
+      </PHProvider>
     </html>
   );
 }
