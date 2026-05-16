@@ -10,16 +10,27 @@ import {
   TrendingUp, 
   ShieldCheck,
   Zap,
-  ChevronRight
+  ChevronRight,
+  MessageSquare,
+  FileText,
+  Home,
+  User,
+  Search,
+  ArrowLeft,
+  Send
 } from 'lucide-react';
 import { useTracker } from '@/hooks/useTracker';
+import { LegalAnalysisTool } from '@/components/LegalAnalysisTool';
+import { generateContentProof, generateLegalBasis } from '@/lib/pdf';
 
-// --- UI Components (Premium Design) ---
+// --- UI Components ---
 
-const GlassCard = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+const GlassCard = ({ children, className, onClick }: { children: React.ReactNode, className?: string, onClick?: () => void }) => (
   <motion.div 
-    whileHover={{ y: -5 }}
-    className={`bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[40px] ${className}`}
+    whileHover={{ y: -5, scale: 1.01 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    className={`bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[40px] cursor-pointer ${className}`}
   >
     {children}
   </motion.div>
@@ -34,32 +45,49 @@ const PrimaryButton = ({ children, onClick, className }: any) => (
   </button>
 );
 
-import { LegalAnalysisTool } from '@/components/LegalAnalysisTool';
-
 // --- Main App Component ---
 
-export default function JangChungGeumMVP() {
-  const [step, setStep] = useState<'LANDING' | 'CALC' | 'ANALYZING' | 'RESULT' | 'PAYMENT'>('LANDING');
-  const { track, trackPageView } = useTracker();
+type AppStep = 'HOME' | 'CALC' | 'ANALYZING' | 'RESULT' | 'CHAT' | 'PAYMENT';
 
+export default function JangChungGeumApp() {
+  const [step, setStep] = useState<AppStep>('HOME');
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
   const [legalInfo, setLegalInfo] = useState<string | null>(null);
+  const { track, trackPageView } = useTracker();
 
   useEffect(() => {
     trackPageView(step);
-    if (step === 'ANALYZING') {
-      // 1. 법률 데이터 가져오기
+    if (step === 'ANALYZING' || step === 'CHAT') {
       fetch('/api/legal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: '장기수선충당금 반환' })
+        body: JSON.stringify({ query: '장기수선충당금 반환 법적 근거' })
       })
       .then(res => res.json())
-      .then(data => {
-        setLegalInfo(data.legalInfo);
-      })
-      .catch(err => console.error("Legal fetch error:", err));
+      .then(data => setLegalInfo(data.legalInfo))
+      .catch(err => console.error(err));
     }
   }, [step]);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+    const newMessages = [...chatMessages, { role: 'user' as const, content: inputMessage }];
+    setChatMessages(newMessages);
+    setInputMessage('');
+    
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages, legalInfo })
+      });
+      const data = await res.json();
+      setChatMessages([...newMessages, { role: 'ai', content: data.content }]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F0F4F8] text-[#1D1D1F] overflow-hidden selection:bg-[#00A3FF] selection:text-white">
@@ -70,211 +98,139 @@ export default function JangChungGeumMVP() {
       <main className="relative z-10 max-w-lg mx-auto px-6 pt-12 pb-24">
         <AnimatePresence mode="wait">
           
-          {/* LANDING SCREEN */}
-          {step === 'LANDING' && (
-            <motion.div 
-              key="landing"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              className="space-y-8"
-            >
-              <div className="space-y-4 text-center">
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="inline-flex items-center gap-2 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 text-[#00A3FF] font-black text-xs uppercase tracking-widest"
-                >
-                  <Zap className="w-3 h-3 fill-current" /> 10초 만에 끝나는 생돈 환급
-                </motion.div>
-                <h1 className="text-5xl font-black tracking-tight leading-[1.1]">
-                  못 받은 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00A3FF] to-[#0066FF]">장충금</span><br/>
-                  수십만원 찾아드려요
+          {/* HOME SCREEN */}
+          {step === 'HOME' && (
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+              <div className="text-center space-y-4">
+                <div className="inline-flex items-center gap-2 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 text-[#00A3FF] font-black text-xs uppercase tracking-widest">
+                  <Zap className="w-3 h-3 fill-current" /> Next Level Legal Tech
+                </div>
+                <h1 className="text-4xl font-black tracking-tight leading-tight">
+                  세입자의 권리,<br/>리나가 찾아드릴게요
                 </h1>
-                <p className="text-gray-500 font-medium text-lg px-4">
-                  이사할 때 깜빡하고 버린 내 돈,<br/>전국 아파트 데이터를 통해 정확히 계산합니다.
-                </p>
               </div>
 
-              <GlassCard className="p-8 space-y-6">
-                <div className="flex items-center justify-between">
+              <div className="grid gap-6">
+                <GlassCard onClick={() => setStep('CALC')} className="p-8 space-y-4">
+                  <div className="w-14 h-14 bg-blue-100 rounded-3xl flex items-center justify-center text-blue-600">
+                    <Calculator className="w-8 h-8" />
+                  </div>
                   <div>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-1">Today's Payout</p>
-                    <p className="text-2xl font-black">4,281,400원</p>
+                    <h3 className="text-xl font-black">장충금 환급 계산기</h3>
+                    <p className="text-sm text-gray-500 font-medium">내용증명 PDF 즉시 생성</p>
                   </div>
-                  <div className="w-12 h-12 bg-[#00A3FF]/10 rounded-2xl flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-[#00A3FF]" />
-                  </div>
-                </div>
-                <PrimaryButton onClick={() => setStep('CALC')} className="w-full">
-                  내 환급금 확인하기 <ChevronRight className="w-5 h-5" />
-                </PrimaryButton>
-              </GlassCard>
+                  <ChevronRight className="absolute top-8 right-8 text-gray-300" />
+                </GlassCard>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-6 bg-white/40 rounded-3xl border border-white/50">
-                  <ShieldCheck className="w-6 h-6 text-green-500 mb-3" />
-                  <p className="font-bold text-sm">법적 근거 완벽</p>
-                  <p className="text-[10px] text-gray-400">시행령 제31조 제7항</p>
-                </div>
-                <div className="p-6 bg-white/40 rounded-3xl border border-white/50">
-                  <CreditCard className="w-6 h-6 text-purple-500 mb-3" />
-                  <p className="font-bold text-sm">즉시 발급</p>
-                  <p className="text-[10px] text-gray-400">PDF 청구서 10초 완성</p>
-                </div>
+                <GlassCard onClick={() => setStep('CHAT')} className="p-8 space-y-4">
+                  <div className="w-14 h-14 bg-purple-100 rounded-3xl flex items-center justify-center text-purple-600">
+                    <MessageSquare className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black">법령 상담 & 증명서</h3>
+                    <p className="text-sm text-gray-500 font-medium">AI 전문가 실시간 법률 자문</p>
+                  </div>
+                  <ChevronRight className="absolute top-8 right-8 text-gray-300" />
+                </GlassCard>
               </div>
             </motion.div>
           )}
 
-          {/* CALC SCREEN */}
+          {/* CALC FLOW (Input) */}
           {step === 'CALC' && (
-            <motion.div 
-              key="calc"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="space-y-8"
-            >
-              <h2 className="text-3xl font-black leading-tight">
-                어디 사시나요?<br/>
-                <span className="text-gray-400">정확한 계산을 위해 필요해요</span>
-              </h2>
-              
+            <motion.div key="calc" initial={{ x: 100 }} animate={{ x: 0 }} className="space-y-8">
+              <button onClick={() => setStep('HOME')} className="flex items-center gap-2 text-gray-400 font-bold text-sm">
+                <ArrowLeft className="w-4 h-4" /> 뒤로가기
+              </button>
+              <h2 className="text-3xl font-black">환급금 계산</h2>
               <div className="space-y-4">
-                <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm focus-within:ring-2 focus-within:ring-[#00A3FF] transition-all">
-                  <p className="text-[10px] font-black text-[#00A3FF] uppercase mb-2">Apartment Name</p>
-                  <input 
-                    type="text" 
-                    placeholder="아파트 이름을 입력하세요"
-                    className="w-full text-xl font-bold border-none p-0 focus:ring-0 bg-transparent"
-                  />
+                <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                  <p className="text-[10px] font-black text-[#00A3FF] uppercase mb-2">Apartment</p>
+                  <input type="text" placeholder="아파트 이름" className="w-full text-xl font-bold border-none p-0 focus:ring-0 bg-transparent" />
+                </div>
+                <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                  <p className="text-[10px] font-black text-[#00A3FF] uppercase mb-2">Period</p>
+                  <input type="text" placeholder="거주 기간 (예: 24개월)" className="w-full text-xl font-bold border-none p-0 focus:ring-0 bg-transparent" />
                 </div>
               </div>
-
-              <div className="fixed bottom-10 left-6 right-6">
-                <PrimaryButton 
-                  onClick={() => {
-                    track('click_calculate');
-                    setStep('ANALYZING');
-                  }} 
-                  className="w-full"
-                >
-                  분석 시작하기
-                </PrimaryButton>
-              </div>
+              <PrimaryButton onClick={() => setStep('ANALYZING')} className="w-full">분석 시작하기</PrimaryButton>
             </motion.div>
           )}
 
-          {/* ANALYZING SCREEN */}
+          {/* ANALYZING */}
           {step === 'ANALYZING' && (
-            <motion.div 
-              key="analyzing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8"
-            >
-              <div className="relative">
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-                  className="w-32 h-32 border-4 border-dashed border-[#00A3FF] rounded-full"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Calculator className="w-12 h-12 text-[#00A3FF]" />
-                </div>
+            <motion.div key="analyzing" className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
+               <AnalyzingSimulator onComplete={() => setStep('RESULT')} />
+               <div className="space-y-2">
+                <h3 className="text-2xl font-black">데이터 매칭 중...</h3>
+                <p className="text-gray-400 font-medium">K-apt 및 법제처 데이터를 분석하고 있습니다.</p>
               </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-black">법률 데이터 분석 중...</h3>
-                <p className="text-gray-400 font-medium">법제처 실시간 판례 및 시행령을 매칭하고 있습니다.</p>
-              </div>
-              <AnalyzingSimulator onComplete={() => setStep('RESULT')} />
             </motion.div>
           )}
 
-          {/* RESULT SCREEN */}
+          {/* RESULT */}
           {step === 'RESULT' && (
-            <motion.div 
-              key="result"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="space-y-6"
-            >
+            <motion.div key="result" className="space-y-6">
               <GlassCard className="p-8 text-center bg-gradient-to-b from-white to-blue-50">
-                <p className="text-gray-400 font-black text-xs uppercase tracking-widest mb-4">환급 예상액</p>
-                <motion.h2 
-                  initial={{ scale: 0.5 }}
-                  animate={{ scale: 1 }}
-                  className="text-6xl font-black text-[#00A3FF] mb-2"
-                >
-                  648,200원
-                </motion.h2>
-                <p className="text-gray-500 font-bold mb-8">잠실 헬리오시티 84㎡ / 24개월 거주 기준</p>
-                
+                <p className="text-gray-400 font-black text-xs uppercase mb-4">환급 예상액</p>
+                <h2 className="text-6xl font-black text-[#00A3FF] mb-2">648,200원</h2>
                 <LegalAnalysisTool legalInfo={legalInfo} amount={648200} />
               </GlassCard>
-
-              <div className="space-y-3">
-                <PrimaryButton 
-                  onClick={() => {
-                    track('click_payment');
-                    setStep('PAYMENT');
-                  }} 
-                  className="w-full py-6"
-                >
-                  정식 청구서(PDF) 발급받기
-                </PrimaryButton>
-                <p className="text-center text-[10px] text-gray-400 font-bold">
-                  * 발급 시 법적 효력이 있는 공동주택관리법 근거가 포함됩니다.
-                </p>
-              </div>
-
-              {/* Chat Button (FAB) */}
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="fixed bottom-10 right-6 w-14 h-14 bg-[#1D1D1F] text-white rounded-full shadow-2xl flex items-center justify-center z-50"
-                onClick={() => alert('AI 법률 전문가와 상담을 시작합니다 (준비 중)')}
-              >
-                <Zap className="w-6 h-6 fill-[#00A3FF] text-[#00A3FF]" />
-              </motion.button>
+              <PrimaryButton onClick={() => generateContentProof({
+                apartment: '잠실 헬리오시티',
+                amount: '648,200',
+                period: '24개월',
+                userName: '대표님',
+                landlordName: '집주인 귀하'
+              })} className="w-full py-6">
+                내용증명 PDF 생성하기
+              </PrimaryButton>
+              <button onClick={() => setStep('HOME')} className="w-full text-center text-gray-400 font-bold">홈으로 이동</button>
             </motion.div>
           )}
 
-          {/* PAYMENT SCREEN */}
-          {step === 'PAYMENT' && (
-            <motion.div 
-              key="payment"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              className="fixed inset-0 z-50 bg-black/80 flex items-end justify-center p-4 backdrop-blur-md"
-            >
-              <div className="bg-white w-full max-w-md rounded-[40px] p-8 space-y-8 shadow-2xl">
-                <div className="space-y-2">
-                  <h3 className="text-3xl font-black">2,900원 결제</h3>
-                  <p className="text-gray-400 font-medium">청구서 한 장으로 수십만원을 되찾으세요.</p>
-                </div>
-
-                <div className="space-y-3">
-                  <button 
-                    onClick={() => {
-                      track('payment_success');
-                      alert('결제가 완료되었습니다! PDF 다운로드를 시작합니다.');
-                      setStep('RESULT');
-                    }}
-                    className="w-full bg-[#FEE500] text-[#3c1e1e] font-black py-5 rounded-2xl flex items-center justify-center gap-2 hover:bg-[#FADA00] transition-colors"
-                  >
-                    카카오페이로 1초 결제
-                  </button>
-                  <button className="w-full bg-[#0064FF] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 hover:bg-[#0052D1] transition-colors">
-                    토스페이로 결제
-                  </button>
-                </div>
-                
+          {/* CHAT FLOW */}
+          {step === 'CHAT' && (
+            <motion.div key="chat" initial={{ y: 100 }} animate={{ y: 0 }} className="space-y-6 h-[80vh] flex flex-col">
+              <div className="flex items-center justify-between">
+                <button onClick={() => setStep('HOME')} className="p-2 bg-white rounded-full shadow-sm"><ArrowLeft className="w-5 h-5" /></button>
+                <h2 className="text-xl font-black">법령 상담소</h2>
                 <button 
-                  onClick={() => setStep('RESULT')}
-                  className="w-full text-center text-gray-400 font-bold text-sm"
+                  onClick={() => generateLegalBasis(legalInfo || "해당 법령 정보가 없습니다.")}
+                  className="p-2 bg-white rounded-full shadow-sm text-[#00A3FF]"
                 >
-                  다음에 할게요
+                  <FileText className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 bg-white/40 backdrop-blur-md rounded-[40px] p-6 overflow-y-auto space-y-4 border border-white/50">
+                {chatMessages.length === 0 && (
+                  <div className="text-center py-10 space-y-4">
+                    <div className="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center shadow-inner">
+                      <Zap className="w-10 h-10 text-[#00A3FF] fill-current" />
+                    </div>
+                    <p className="text-gray-500 font-bold">무엇이든 물어보세요.<br/>리나가 법적으로 답변해 드릴게요!</p>
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-4 rounded-3xl font-medium text-sm ${msg.role === 'user' ? 'bg-[#00A3FF] text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2 p-2 bg-white rounded-3xl shadow-lg">
+                <input 
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="질문을 입력하세요..." 
+                  className="flex-1 border-none focus:ring-0 text-sm font-bold pl-4" 
+                />
+                <button onClick={handleSendMessage} className="w-12 h-12 bg-[#00A3FF] rounded-2xl flex items-center justify-center text-white shadow-lg">
+                  <Send className="w-5 h-5" />
                 </button>
               </div>
             </motion.div>
@@ -288,7 +244,6 @@ export default function JangChungGeumMVP() {
 
 function AnalyzingSimulator({ onComplete }: { onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setProgress(prev => {
@@ -297,19 +252,14 @@ function AnalyzingSimulator({ onComplete }: { onComplete: () => void }) {
           setTimeout(onComplete, 500);
           return 100;
         }
-        return prev + 2;
+        return prev + 5;
       });
-    }, 50);
+    }, 100);
     return () => clearInterval(timer);
   }, []);
-
   return (
-    <div className="w-full max-w-[200px] h-2 bg-gray-100 rounded-full overflow-hidden">
-      <motion.div 
-        initial={{ width: 0 }}
-        animate={{ width: `${progress}%` }}
-        className="h-full bg-[#00A3FF]"
-      />
+    <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+      <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-[#00A3FF]" />
     </div>
   );
 }
