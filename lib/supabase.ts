@@ -14,6 +14,8 @@ export type TrackingEvent =
   | 'click_payment'
   | 'payment_success'
   | 'download_pdf'
+  | 'click_download'
+  | 'click_home'
   | 'chat_inquiry';
 
 /**
