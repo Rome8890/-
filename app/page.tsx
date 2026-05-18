@@ -14,10 +14,10 @@ import {
   MessageSquare,
   FileText,
   Home,
-  User,
   Search,
   ArrowLeft,
-  Send
+  Send,
+  Copy
 } from 'lucide-react';
 import { useTracker } from '@/hooks/useTracker';
 import { LegalAnalysisTool } from '@/components/LegalAnalysisTool';
@@ -237,11 +237,39 @@ export default function JangChungGeumApp() {
                 )}
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-4 rounded-3xl font-medium text-sm ${msg.role === 'user' ? 'bg-[#00A3FF] text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}>
+                    <div className={`relative max-w-[85%] p-4 rounded-3xl font-medium text-sm ${msg.role === 'user' ? 'bg-[#00A3FF] text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}>
                       {msg.content}
+                      {msg.role === 'ai' && (
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(msg.content);
+                            alert('답변이 복사되었습니다! 지식인에 붙여넣기 하세요.');
+                          }}
+                          className="absolute -right-10 top-0 p-2 bg-white rounded-full shadow-sm text-gray-400 hover:text-[#00A3FF] transition-colors"
+                          title="답변 복사하기"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Quick Action Chips */}
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button 
+                  onClick={() => setInputMessage('네이버 지식인 질문: 장기수선충당금 돌려받을 수 있나요? 집주인이 안 준다고 합니다.')}
+                  className="whitespace-nowrap px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-colors"
+                >
+                  📝 지식인 답변 생성 (마케팅용)
+                </button>
+                <button 
+                  onClick={() => setInputMessage('내용증명을 보냈는데도 무시하면 어떻게 해야 하나요?')}
+                  className="whitespace-nowrap px-4 py-2 bg-gray-50 text-gray-600 rounded-full text-xs font-bold border border-gray-100 hover:bg-gray-100 transition-colors"
+                >
+                  ⚖️ 내용증명 무시 대응법
+                </button>
               </div>
 
               <div className="flex gap-2 p-2 bg-white rounded-3xl shadow-lg">
