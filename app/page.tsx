@@ -12,17 +12,20 @@ import {
   CreditCard,
   Send,
   CheckCheck,
+  ArrowLeft,
 } from 'lucide-react';
 import { useTracker } from '@/hooks/useTracker';
-import { generateContentProof, generateLegalBasis } from '@/lib/pdf';
+import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 
-// --- 데이터 ---
+// ── 데이터 ────────────────────────────────────────────────────
 
 const JISIKIN_QUESTIONS = [
   {
     id: 1,
     tag: '집주인 거부형',
     tagColor: 'red',
+    urgency: '즉각 대응 필요',
+    verdict: '집주인 말은 틀렸습니다. 법적으로 100% 돌려받을 수 있습니다.',
     title: '장기수선충당금 돌려받을 수 있나요? 집주인이 절대 못 준다고 합니다',
     body: '2년 거주하다 이사 나왔는데 집주인이 장충금은 자기 돈이라며 안 돌려준다고 합니다. 정말 못 받는 건가요? 매달 2만원 정도 납부했는데 총 48만원 정도 됩니다.',
     estimatedAmount: '648,200',
@@ -30,17 +33,31 @@ const JISIKIN_QUESTIONS = [
     situation: '집주인이 반환을 거부하는 상황으로, 즉각적인 법적 대응이 필요합니다. 내용증명 발송 시 집주인은 법적으로 반환 의무가 발생합니다.',
     legalSummary: [
       {
-        title: '공동주택관리법 시행령 제31조 제7항',
-        desc: '"임차인이 납부한 장기수선충당금은 퇴거 시 임대인에게 반환 청구 가능" — 집주인의 반환 거부는 명백한 법령 위반입니다.',
+        type: 'law' as const,
+        badge: '법령',
+        cite: '공동주택관리법 시행령 제31조 제7항',
+        quote: '임차인이 납부한 장기수선충당금은 퇴거 시 임대인에게 반환 청구할 수 있다.',
+        point: '집주인의 반환 거부는 이 조항의 명백한 위반입니다.',
       },
       {
-        title: '대법원 2003다62059 판결',
-        desc: '"장기수선충당금은 소유자 부담 원칙이므로 임차인이 납부한 경우 반환 청구권 인정" — 대법원 확정 판례입니다.',
+        type: 'precedent' as const,
+        badge: '대법원 판례',
+        cite: '대법원 2004. 1. 27. 선고 2003다62059 판결',
+        quote: '장기수선충당금은 소유자 부담 원칙 — 임차인이 납부한 경우 반환 청구권 인정.',
+        point: '전국 모든 법원에서 동일하게 적용되는 확정 판례입니다.',
       },
       {
-        title: '소액심판 제도',
-        desc: '집주인 계속 거부 시 소액심판 청구 가능. 수수료 1만원, 승소율 95% 이상으로 가장 강력한 압박 수단입니다.',
+        type: 'remedy' as const,
+        badge: '법적 수단',
+        cite: '소액심판 청구권',
+        quote: '집주인이 계속 거부할 경우 소액심판을 청구할 수 있습니다.',
+        point: '인지대 단 1만원 · 평균 2~3개월 내 판결 · 임차인 승소율 95% 이상',
       },
+    ],
+    actionSteps: [
+      { timing: '오늘', icon: '📋', action: '관리사무소 방문 → 장기수선충당금 납부확인서 발급 요청' },
+      { timing: '이번 주', icon: '📮', action: '법적 근거 포함 내용증명서 집주인에게 우편 발송 (법적 효력 즉시)' },
+      { timing: '7일 후', icon: '⚖️', action: '미반환 시 소액심판 청구 — 수수료 1만원, 승소율 95%+' },
     ],
     answer: `안녕하세요. 충분히 억울하고 답답하실 상황, 깊이 공감합니다. 하지만 걱정하지 마세요 — 이건 100% 돌려받으실 수 있는 돈입니다.
 
@@ -64,18 +81,14 @@ const JISIKIN_QUESTIONS = [
 2️⃣ 법적 근거가 담긴 내용증명서를 집주인에게 내용증명 우편 발송
 3️⃣ 집주인 무시 시 → 소액심판청구 (수수료 1만원, 승소율 95%+)
 
-━━━━━━━━━━━━━━━━━━━━━━━
-📄 내용증명 PDF 무료 발급
-━━━━━━━━━━━━━━━━━━━━━━━
-법적 근거가 완벽히 포함된 정식 내용증명서를 10초 만에 발급받으세요.
-집주인에게 보내는 순간 법적 효력이 즉시 발생합니다.
-
-👉 무료 내용증명 PDF 받기: [장충금 헌터 무료 서비스 바로가기]`,
+내용증명이 필요하시다면 법적 근거가 완벽히 포함된 문서를 무료로 발급받으실 수 있습니다 👉 [장충금 헌터 무료 서비스 바로가기]`,
   },
   {
     id: 2,
     tag: '이사 준비형',
     tagColor: 'blue',
+    urgency: '이사 전 반드시 확인',
+    verdict: '세입자가 낼 의무가 없는 돈입니다. 이사 전에 전액 청구하세요.',
     title: '이사 나가기 전에 장기수선충당금 돌려받을 수 있나요?',
     body: '다음 달 이사 예정인데 관리비 고지서를 보니 장기수선충당금이 매달 나가고 있더라고요. 세입자가 이걸 내는 게 맞는 건가요? 이사 나가면서 돌려받을 수 있나요?',
     estimatedAmount: '412,500',
@@ -83,17 +96,31 @@ const JISIKIN_QUESTIONS = [
     situation: '이사 예정으로 정보 확인이 필요한 상황입니다. 이사 전 반드시 청구해야 하며, 보증금 반환 시 함께 정산하는 것이 가장 유리합니다.',
     legalSummary: [
       {
-        title: '공동주택관리법 시행령 제31조 제7항',
-        desc: '"장기수선충당금은 소유자(집주인) 부담이 원칙" — 세입자가 대신 낸 금액 전액을 이사 시 돌려받을 수 있습니다.',
+        type: 'law' as const,
+        badge: '법령',
+        cite: '공동주택관리법 시행령 제31조 제7항',
+        quote: '장기수선충당금은 소유자(집주인) 부담이 원칙이다.',
+        point: '세입자가 대신 낸 금액 전액 — 이사 시 집주인에게 반환 청구 가능합니다.',
       },
       {
-        title: '대법원 2003다62059 판결',
-        desc: '"거주 기간 × 월 납부액 전액이 반환 대상" — 단 1개월치도 빠짐없이 청구 가능합니다.',
+        type: 'precedent' as const,
+        badge: '대법원 판례',
+        cite: '대법원 2004. 1. 27. 선고 2003다62059 판결',
+        quote: '거주 기간 × 월 납부액 전액이 반환 대상이다.',
+        point: '단 1개월치도 빠짐없이 청구 가능 — 이사 당일 전 청구가 핵심입니다.',
       },
       {
-        title: '이사 전 필수 체크',
-        desc: '이사 당일 전에 반드시 청구해야 합니다. 보증금 반환 시 함께 정산하지 않으면 나중에 청구가 복잡해집니다.',
+        type: 'remedy' as const,
+        badge: '이사 전 필수',
+        cite: '보증금과 동시 정산 전략',
+        quote: '이사 당일 보증금 반환 시 장충금을 함께 청구하는 것이 가장 유리합니다.',
+        point: '이사 후 별도 청구 시 집주인이 회피할 가능성 높아 — 반드시 이사 전 청구하세요.',
       },
+    ],
+    actionSteps: [
+      { timing: '지금 바로', icon: '📋', action: '관리사무소 방문 → 장기수선충당금 납부확인서 발급 (무료)' },
+      { timing: '이사 당일', icon: '💬', action: '집주인에게 보증금 + 장충금 함께 반환 요청 (문자로 기록 남기기)' },
+      { timing: '거부 시', icon: '📮', action: '내용증명서 발송 → 7일 내 반환 요구 (법적 효력 즉시 발생)' },
     ],
     answer: `안녕하세요! 이사 준비 중에 꼼꼼하게 챙기고 계시는군요. 맞습니다, 이사 전에 반드시 돌려받아야 할 돈입니다.
 
@@ -111,49 +138,78 @@ const JISIKIN_QUESTIONS = [
 → 단 한 달치도 빠짐없이 청구 가능합니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━
-💰 예상 환급액
-━━━━━━━━━━━━━━━━━━━━━━━
-18개월 거주 기준 약 30~50만원 (전용 84㎡ 기준 월 약 2.3만원)
-
-━━━━━━━━━━━━━━━━━━━━━━━
 📋 이사 전 필수 체크리스트
 ━━━━━━━━━━━━━━━━━━━━━━━
 1️⃣ 관리사무소 → '장기수선충당금 납부확인서' 발급
 2️⃣ 집주인에게 보증금 반환 시 함께 청구 (구두 + 문자)
 3️⃣ 거부 시 → 내용증명 발송 (법적 효력 즉시 발생)
 
-━━━━━━━━━━━━━━━━━━━━━━━
-📄 내용증명 PDF 무료 발급
-━━━━━━━━━━━━━━━━━━━━━━━
-10초 만에 법적 근거가 완벽히 포함된 정식 내용증명서를 무료로 발급받으세요.
-이사 전 미리 준비해두면 집주인이 거부할 수가 없습니다.
-
-👉 무료 내용증명 PDF 받기: [장충금 헌터 무료 서비스 바로가기]`,
+내용증명이 필요하시다면 법적 근거가 완벽히 포함된 문서를 무료로 발급받으실 수 있습니다 👉 [장충금 헌터 무료 서비스 바로가기]`,
   },
 ];
 
-// --- UI ---
+const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eon';
 
-const PrimaryButton = ({ children, onClick, className }: any) => (
+// ── UI 컴포넌트 ───────────────────────────────────────────────
+
+const PrimaryButton = ({ children, onClick, className, disabled }: any) => (
   <button
     onClick={onClick}
-    className={`bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-5 px-8 rounded-2xl shadow-[0_10px_30px_rgba(0,163,255,0.3)] hover:shadow-[0_15px_40px_rgba(0,163,255,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 ${className}`}
+    disabled={disabled}
+    className={`bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-5 px-8 rounded-2xl shadow-[0_10px_30px_rgba(0,163,255,0.3)] hover:shadow-[0_15px_40px_rgba(0,163,255,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
   >
     {children}
   </button>
 );
 
-type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'RESULT' | 'PAYMENT';
+const InputField = ({ label, placeholder, value, onChange, type = 'text', suffix }: any) => (
+  <div className="space-y-1.5">
+    <label className="text-xs font-black text-gray-500 uppercase tracking-widest">{label}</label>
+    <div className="relative">
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-4 text-base font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00A3FF]/30 focus:border-[#00A3FF] transition-all"
+      />
+      {suffix && (
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">
+          {suffix}
+        </span>
+      )}
+    </div>
+  </div>
+);
+
+// ── 앱 타입 ───────────────────────────────────────────────────
+
+type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT' | 'PAYMENT';
+
+interface UserInfo {
+  apartmentName: string;
+  months: string;
+  monthlyAmount: string;
+  userName: string;
+}
+
+// ── 메인 앱 ───────────────────────────────────────────────────
 
 function JangChungGeumApp() {
   const searchParams = useSearchParams();
   const [step, setStep] = useState<AppStep>('HOME');
   const [selectedQuestion, setSelectedQuestion] = useState<(typeof JISIKIN_QUESTIONS)[0] | null>(null);
-  const [legalInfo, setLegalInfo] = useState<string | null>(null);
   const [sendError, setSendError] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    apartmentName: '',
+    months: '',
+    monthlyAmount: '',
+    userName: '',
+  });
+  const [isPaying, setIsPaying] = useState(false);
   const { track } = useTracker();
 
-  // 지식인 링크로 유입된 세입자 — 맞춤 랜딩
+  // 지식인 링크로 유입 → 바로 RESULT
   useEffect(() => {
     const from = searchParams.get('from');
     const qid = searchParams.get('qid');
@@ -161,18 +217,22 @@ function JangChungGeumApp() {
       const q = JISIKIN_QUESTIONS.find((q) => q.id === parseInt(qid));
       if (q) {
         setSelectedQuestion(q);
-        fetch('/api/legal', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: '장기수선충당금 반환 법적 근거' }),
-        })
-          .then((r) => r.json())
-          .then((d) => setLegalInfo(d.legalInfo))
-          .catch(() => {});
         setStep('RESULT');
       }
     }
+    if (searchParams.get('payment') === 'fail') {
+      alert('결제가 취소되었습니다.');
+    }
   }, [searchParams]);
+
+  // 실제 환급액 계산
+  const actualRefund = (() => {
+    const m = parseInt(userInfo.months) || 0;
+    const a = parseInt(userInfo.monthlyAmount.replace(/,/g, '')) || 0;
+    return m * a;
+  })();
+
+  const isInputValid = parseInt(userInfo.months) > 0 && parseInt(userInfo.monthlyAmount.replace(/,/g, '')) > 0;
 
   const getServiceLink = (qid: number) => {
     if (typeof window === 'undefined') return '';
@@ -183,6 +243,7 @@ function JangChungGeumApp() {
     setSelectedQuestion(q);
     setStep('SENDING');
     setSendError(false);
+    track('click_calculate');
 
     try {
       const res = await fetch('/api/telegram', {
@@ -198,12 +259,48 @@ function JangChungGeumApp() {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
-    } catch (e) {
+    } catch {
       setSendError(true);
     }
-
     setStep('SENT');
   };
+
+  const handlePayment = async () => {
+    if (!isInputValid || !selectedQuestion) return;
+    setIsPaying(true);
+    track('click_payment');
+
+    const months = parseInt(userInfo.months);
+    const monthlyAmount = parseInt(userInfo.monthlyAmount.replace(/,/g, ''));
+
+    // 결제 전 사용자 정보 저장 (리다이렉트 후 복구용)
+    sessionStorage.setItem('jcg_user_data', JSON.stringify({
+      apartmentName: userInfo.apartmentName || '해당 아파트',
+      months,
+      monthlyAmount,
+      refundAmount: actualRefund,
+      userName: userInfo.userName || '세입자',
+    }));
+
+    try {
+      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+      const payment = tossPayments.payment({ customerKey: ANONYMOUS });
+      await payment.requestPayment({
+        method: 'CARD',
+        amount: { currency: 'KRW', value: 2900 },
+        orderId: `jcg_${Date.now()}`,
+        orderName: '장충금 헌터 내용증명 PDF',
+        customerName: userInfo.userName || '세입자',
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/?payment=fail`,
+      });
+    } catch (e) {
+      console.error('Payment error:', e);
+      setIsPaying(false);
+    }
+  };
+
+  const formatNumber = (val: string) => val.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
   return (
     <div className="min-h-screen bg-[#F0F4F8] text-[#1D1D1F] overflow-hidden selection:bg-[#00A3FF] selection:text-white">
@@ -213,7 +310,7 @@ function JangChungGeumApp() {
       <main className="relative z-10 max-w-lg mx-auto px-6 pt-12 pb-24">
         <AnimatePresence mode="wait">
 
-          {/* ── HOME: 질문 유형 선택 (메인화면) ── */}
+          {/* ── HOME ── */}
           {step === 'HOME' && (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
               <div className="space-y-3">
@@ -269,7 +366,7 @@ function JangChungGeumApp() {
             </motion.div>
           )}
 
-          {/* ── SENDING: 전송 중 ── */}
+          {/* ── SENDING ── */}
           {step === 'SENDING' && (
             <motion.div
               key="sending"
@@ -289,7 +386,7 @@ function JangChungGeumApp() {
             </motion.div>
           )}
 
-          {/* ── SENT: 전송 완료 ── */}
+          {/* ── SENT ── */}
           {step === 'SENT' && selectedQuestion && (
             <motion.div
               key="sent"
@@ -299,40 +396,17 @@ function JangChungGeumApp() {
             >
               <div className={`rounded-3xl p-6 text-center space-y-3 ${sendError ? 'bg-red-50 border border-red-100' : 'bg-green-50 border border-green-100'}`}>
                 <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center ${sendError ? 'bg-red-100' : 'bg-green-100'}`}>
-                  {sendError
-                    ? <span className="text-3xl">😱</span>
-                    : <CheckCheck className="w-8 h-8 text-green-600" />}
+                  {sendError ? <span className="text-3xl">😱</span> : <CheckCheck className="w-8 h-8 text-green-600" />}
                 </div>
                 <h2 className="text-2xl font-black">
                   {sendError ? '전송 실패' : '텔레그램 전송 완료!'}
                 </h2>
                 <p className="text-sm font-medium text-gray-600">
                   {sendError
-                    ? '텔레그램 설정을 확인해주세요. 환경 변수를 점검해 보세요.'
-                    : '답변과 맞춤형 링크가 텔레그램으로 전송되었습니다.\n지식인에서 붙여넣기 후 등록해 주세요!'}
+                    ? '텔레그램 설정을 확인해주세요.'
+                    : '답변과 맞춤형 링크가 전송되었습니다.\n지식인에서 붙여넣기 후 등록해 주세요!'}
                 </p>
               </div>
-
-              {!sendError && (
-                <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white/20 shadow-sm space-y-3">
-                  <p className="text-xs font-black text-gray-500 uppercase tracking-widest">전송된 내용</p>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-black px-2 py-1 rounded-full ${selectedQuestion.tagColor === 'red' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-                      {selectedQuestion.tag}
-                    </span>
-                  </div>
-                  <p className="font-black text-sm leading-snug">{selectedQuestion.title}</p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <p className="text-xs text-gray-500 font-medium">법령 핵심요약 + 맞춤형 서비스 링크 포함</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <p className="text-xs text-gray-500 font-medium">예상 환급액: <span className="font-black text-[#00A3FF]">{selectedQuestion.estimatedAmount}원</span></p>
-                  </div>
-                </div>
-              )}
-
               <PrimaryButton onClick={() => { setSelectedQuestion(null); setStep('HOME'); }} className="w-full">
                 다른 유형 선택하기 <ChevronRight className="w-5 h-5" />
               </PrimaryButton>
@@ -341,138 +415,271 @@ function JangChungGeumApp() {
 
           {/* ── RESULT: 세입자 맞춤 랜딩 ── */}
           {step === 'RESULT' && selectedQuestion && (
-            <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-              <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-2xl border border-orange-100">
-                <CheckCircle2 className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                <p className="text-xs font-bold text-orange-700">{selectedQuestion.tag} — 맞춤 분석 완료</p>
+            <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+
+              {/* 상황 유형 + 긴급도 배지 */}
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-black px-3 py-1.5 rounded-full ${selectedQuestion.tagColor === 'red' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                  {selectedQuestion.tag}
+                </span>
+                <span className="text-[10px] font-black px-3 py-1.5 rounded-full bg-orange-100 text-orange-600">
+                  ⚡ {selectedQuestion.urgency}
+                </span>
               </div>
 
-              {/* 환급 예상액 */}
-              <div className="bg-gradient-to-b from-white to-blue-50 rounded-[40px] border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8 text-center space-y-4">
-                <p className="text-gray-400 font-black text-xs uppercase">환급 예상액</p>
-                <h2 className="text-6xl font-black text-[#00A3FF]">{selectedQuestion.estimatedAmount}원</h2>
-                <p className="text-sm text-gray-500 font-medium">거주 {selectedQuestion.period} 기준</p>
-              </div>
-
-              {/* 맞춤형 상황 분석 */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-5 border border-blue-100 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-[#00A3FF] rounded-xl flex items-center justify-center">
-                    <ShieldCheck className="w-4 h-4 text-white" />
+              {/* 핵심 결론 배너 */}
+              <div className={`rounded-3xl p-5 border-l-4 ${selectedQuestion.tagColor === 'red' ? 'bg-red-50 border-red-500' : 'bg-blue-50 border-blue-500'}`}>
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className={`w-5 h-5 flex-shrink-0 mt-0.5 ${selectedQuestion.tagColor === 'red' ? 'text-red-500' : 'text-blue-500'}`} />
+                  <div>
+                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${selectedQuestion.tagColor === 'red' ? 'text-red-500' : 'text-blue-500'}`}>
+                      AI 법령 분석 결론
+                    </p>
+                    <p className="font-black text-sm text-gray-900 leading-relaxed">
+                      {selectedQuestion.verdict}
+                    </p>
                   </div>
-                  <p className="font-black text-sm text-blue-900">맞춤형 상황 분석</p>
-                  <span className="ml-auto text-xs font-black text-[#00A3FF]">승소율 98.4%</span>
                 </div>
-                <p className="text-xs text-blue-800 font-medium leading-relaxed">{selectedQuestion.situation}</p>
               </div>
 
               {/* 법령 핵심요약 */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Scale className="w-4 h-4 text-gray-500" />
-                  <p className="text-xs font-black text-gray-500 uppercase tracking-widest">법령 핵심요약</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <Scale className="w-4 h-4 text-gray-400" />
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">법령 · 판례 핵심요약</p>
                 </div>
-                {selectedQuestion.legalSummary.map((item, i) => (
-                  <div key={i} className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-1">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs font-black text-gray-800">{item.title}</p>
+
+                {selectedQuestion.legalSummary.map((item, i) => {
+                  const badgeStyle =
+                    item.type === 'law'
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : item.type === 'precedent'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-amber-100 text-amber-700';
+                  const borderStyle =
+                    item.type === 'law'
+                      ? 'border-indigo-100'
+                      : item.type === 'precedent'
+                      ? 'border-emerald-100'
+                      : 'border-amber-100';
+
+                  return (
+                    <div key={i} className={`bg-white rounded-2xl border ${borderStyle} shadow-sm overflow-hidden`}>
+                      {/* 카드 헤더 */}
+                      <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${badgeStyle}`}>
+                          {item.badge}
+                        </span>
+                        <p className="text-xs font-black text-gray-800 leading-tight">{item.cite}</p>
+                      </div>
+                      {/* 인용문 */}
+                      <div className="mx-4 mb-2 px-3 py-2 bg-gray-50 rounded-xl border-l-2 border-gray-300">
+                        <p className="text-xs text-gray-600 font-medium leading-relaxed italic">
+                          "{item.quote}"
+                        </p>
+                      </div>
+                      {/* 핵심 포인트 */}
+                      <div className="px-4 pb-4 flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-gray-500 font-medium leading-relaxed">{item.point}</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 font-medium leading-relaxed pl-6">{item.desc}</p>
+                  );
+                })}
+              </div>
+
+              {/* 지금 당장 해야 할 행동 단계 */}
+              <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white/20 shadow-sm space-y-3">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">지금 당장 해야 할 일</p>
+                {selectedQuestion.actionSteps.map((s, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="flex-shrink-0 text-center">
+                      <span className="text-lg">{s.icon}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black text-[#00A3FF] bg-blue-50 px-2 py-0.5 rounded-full">{s.timing}</span>
+                      <p className="text-xs text-gray-700 font-medium leading-relaxed mt-1">{s.action}</p>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              {/* PDF 결제 CTA */}
-              <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-white" />
+              {/* ── 내용증명 PDF CTA (신뢰성 강화) ── */}
+              <div className="rounded-[32px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+                {/* 상단: 공식 문서 헤더 */}
+                <div className="bg-gradient-to-r from-[#0A0F1E] to-[#111827] px-6 pt-6 pb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                    <span className="ml-2 text-[10px] text-white/30 font-mono">법적 효력 문서</span>
                   </div>
-                  <div>
-                    <p className="font-black text-white text-sm">내용증명 PDF 즉시 발급</p>
-                    <p className="text-white/50 text-xs font-medium">법적 근거 완벽 포함 · 발송 즉시 법적 효력</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-white/50 text-[10px] font-black uppercase tracking-widest">내용증명 PDF 즉시 발급</p>
+                      <h3 className="text-white font-black text-lg mt-0.5 leading-tight">
+                        장기수선충당금<br />반환 청구서
+                      </h3>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-white/40 text-[10px] line-through">무료로 대충 만든 PDF</p>
+                      <p className="text-[#00A3FF] font-black text-2xl">2,900원</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                  <span className="text-white/60 text-xs font-bold">단 한 번의 비용으로</span>
-                  <span className="text-[#00A3FF] font-black">2,900원</span>
+
+                {/* 중단: 포함 내용 */}
+                <div className="bg-[#0D1420] px-6 py-4 space-y-2.5">
+                  {[
+                    { icon: '📄', label: '정식 내용증명서', sub: '법원 제출 · 우체국 발송 가능한 법적 문서' },
+                    { icon: '⚖️', label: '대법원 판례 인용', sub: '2003다62059 확정 판례 직접 인용 포함' },
+                    { icon: '📋', label: '공동주택관리법 근거', sub: '시행령 제31조 제7항 조문 명시' },
+                    { icon: '📮', label: '7일 이내 반환 요구 조항', sub: '미이행 시 법적 조치 예고문 포함' },
+                  ].map((d) => (
+                    <div key={d.label} className="flex items-center gap-3">
+                      <span className="text-base w-6 text-center flex-shrink-0">{d.icon}</span>
+                      <div>
+                        <p className="text-white text-xs font-black leading-none">{d.label}</p>
+                        <p className="text-white/40 text-[10px] font-medium mt-0.5">{d.sub}</p>
+                      </div>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 ml-auto flex-shrink-0" />
+                    </div>
+                  ))}
                 </div>
-                <button
-                  onClick={() => setStep('PAYMENT')}
-                  className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(0,163,255,0.4)] active:scale-95 transition-all"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  내용증명 PDF 받기 (2,900원)
-                </button>
+
+                {/* 하단: 신뢰 지표 + 버튼 */}
+                <div className="bg-[#111827] px-6 pt-4 pb-6 space-y-4">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {[
+                      { val: '95%+', label: '임차인 승소율' },
+                      { val: '즉시', label: '법적 효력 발생' },
+                      { val: '10초', label: '발급 소요 시간' },
+                    ].map(({ val, label }) => (
+                      <div key={label} className="bg-white/5 rounded-2xl py-2.5 px-1">
+                        <p className="text-[#00A3FF] font-black text-base">{val}</p>
+                        <p className="text-white/40 text-[9px] font-bold mt-0.5">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setStep('INPUT')}
+                    className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_30px_rgba(0,163,255,0.35)] active:scale-95 transition-all text-sm"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    내용증명 PDF 발급받기 — 2,900원
+                  </button>
+
+                  <p className="text-center text-[10px] text-white/25 font-medium">
+                    카카오페이 · 토스페이 · 신용/체크카드 결제 가능
+                  </p>
+                </div>
               </div>
 
-              <p className="text-center text-xs text-gray-400 font-medium">법적 근거 완벽 포함 · 집주인 발송 즉시 법적 효력 발생</p>
+            </motion.div>
+          )}
+
+          {/* ── INPUT: 사용자 정보 입력 + 환급액 계산 ── */}
+          {step === 'INPUT' && selectedQuestion && (
+            <motion.div key="input" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setStep('RESULT')}
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-500" />
+                </button>
+                <div>
+                  <h2 className="font-black text-xl">내 환급액 계산하기</h2>
+                  <p className="text-xs text-gray-500 font-medium">실제 납부 내역을 입력해 정확한 금액을 확인하세요</p>
+                </div>
+              </div>
+
+              {/* 입력 폼 */}
+              <div className="bg-white/70 backdrop-blur-xl rounded-[32px] p-6 space-y-5 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.06)]">
+                <InputField
+                  label="아파트명 (선택)"
+                  placeholder="예: 래미안 OO아파트 101동 201호"
+                  value={userInfo.apartmentName}
+                  onChange={(e: any) => setUserInfo({ ...userInfo, apartmentName: e.target.value })}
+                />
+                <InputField
+                  label="이름 (선택 — PDF에 표시)"
+                  placeholder="예: 홍길동"
+                  value={userInfo.userName}
+                  onChange={(e: any) => setUserInfo({ ...userInfo, userName: e.target.value })}
+                />
+                <InputField
+                  label="거주 기간 *"
+                  placeholder="예: 24"
+                  value={userInfo.months}
+                  onChange={(e: any) => setUserInfo({ ...userInfo, months: e.target.value.replace(/\D/g, '') })}
+                  type="number"
+                  suffix="개월"
+                />
+                <InputField
+                  label="월 납부액 * (관리비 고지서 확인)"
+                  placeholder="예: 23,000"
+                  value={userInfo.monthlyAmount}
+                  onChange={(e: any) => setUserInfo({ ...userInfo, monthlyAmount: formatNumber(e.target.value) })}
+                  suffix="원"
+                />
+              </div>
+
+              {/* 실시간 계산 결과 */}
+              <motion.div
+                animate={{ scale: isInputValid ? 1 : 0.98, opacity: isInputValid ? 1 : 0.5 }}
+                className="bg-gradient-to-b from-white to-blue-50 rounded-[32px] p-6 text-center space-y-2 border border-blue-100 shadow-sm"
+              >
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">계산된 환급 예상액</p>
+                <p className="text-5xl font-black text-[#00A3FF]">
+                  {actualRefund > 0 ? `${actualRefund.toLocaleString('ko-KR')}원` : '---'}
+                </p>
+                {isInputValid && (
+                  <p className="text-xs text-gray-500 font-medium">
+                    {userInfo.months}개월 × 월 {userInfo.monthlyAmount}원
+                  </p>
+                )}
+              </motion.div>
+
+              {/* 결제 버튼 */}
+              <PrimaryButton
+                onClick={handlePayment}
+                disabled={!isInputValid || isPaying}
+                className="w-full"
+              >
+                {isPaying ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                      className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white"
+                    />
+                    결제창 열기 중...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    내용증명 PDF 받기 (2,900원)
+                  </>
+                )}
+              </PrimaryButton>
+
+              <div className="flex items-center justify-center gap-4 text-xs text-gray-400 font-medium">
+                {['카카오페이', '토스페이', '신용/체크카드'].map((m) => (
+                  <span key={m} className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-green-400" /> {m}
+                  </span>
+                ))}
+              </div>
+
+              <p className="text-center text-xs text-gray-400 font-medium">
+                결제 완료 즉시 내용증명 PDF 다운로드
+              </p>
             </motion.div>
           )}
 
         </AnimatePresence>
-
-        {/* ── PAYMENT MODAL ── */}
-        {step === 'PAYMENT' && selectedQuestion && (
-          <div className="fixed inset-0 z-[100] bg-black/80 flex items-end justify-center p-4 backdrop-blur-md">
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              className="bg-white w-full max-w-md rounded-[40px] p-8 space-y-6 shadow-2xl mb-4"
-            >
-              <div className="space-y-1">
-                <h3 className="text-3xl font-black">내용증명 PDF 발급</h3>
-                <p className="text-gray-400 font-medium text-sm">단돈 2,900원으로 수십만원의 권리를 되찾으세요.</p>
-              </div>
-
-              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-1">
-                <p className="text-xs font-black text-blue-700">{selectedQuestion.tag} — 맞춤 분석 완료</p>
-                <p className="text-2xl font-black text-[#00A3FF]">{selectedQuestion.estimatedAmount}원 환급 예상</p>
-                <p className="text-xs text-gray-500 font-medium">{selectedQuestion.period} 거주 기준</p>
-              </div>
-
-              <div className="p-4 bg-gray-50 rounded-2xl space-y-2">
-                <p className="text-xs font-black text-gray-700 mb-2">발급 문서</p>
-                {[
-                  '📄 정식 내용증명서 (법원 제출용)',
-                  '⚖️ 법령 근거 증명서 (대법원 판례 포함)',
-                ].map((label) => (
-                  <div key={label} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <p className="text-xs font-bold text-gray-600">{label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { label: '카카오페이로 1초 결제', bg: 'bg-[#FEE500]', text: 'text-[#3c1e1e]', hover: 'hover:bg-[#FADA00]' },
-                  { label: '토스페이로 결제', bg: 'bg-[#0064FF]', text: 'text-white', hover: 'hover:bg-[#0052D1]' },
-                ].map(({ label, bg, text, hover }) => (
-                  <button
-                    key={label}
-                    onClick={() => {
-                      track('payment_success');
-                      const amt = selectedQuestion.estimatedAmount;
-                      const period = selectedQuestion.period;
-                      generateContentProof({ apartment: '해당 아파트', amount: amt, period, userName: '세입자', landlordName: '집주인 귀하' });
-                      generateLegalBasis(legalInfo || '[핵심 승소 판례] 대법원 2004. 1. 27. 선고 2003다62059 판결\n"장기수선충당금은 소유자 부담 원칙이므로 임차인이 납부한 경우 반환 청구권 인정" (공동주택관리법 시행령 제31조 제7항)');
-                      setStep('RESULT');
-                    }}
-                    className={`w-full ${bg} ${text} font-black py-5 rounded-2xl flex items-center justify-center gap-2 ${hover} transition-colors`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              <button onClick={() => setStep('RESULT')} className="w-full text-center text-gray-400 font-bold text-sm">
-                다음에 할게요
-              </button>
-            </motion.div>
-          </div>
-        )}
       </main>
     </div>
   );
