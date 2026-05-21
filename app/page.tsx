@@ -184,7 +184,7 @@ const InputField = ({ label, placeholder, value, onChange, type = 'text', suffix
 
 // ── 앱 타입 ───────────────────────────────────────────────────
 
-type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT' | 'PAYMENT';
+type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT';
 
 interface UserInfo {
   apartmentName: string;

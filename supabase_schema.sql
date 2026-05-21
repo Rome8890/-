@@ -25,6 +25,8 @@ CREATE TABLE search_history (
 CREATE TABLE payments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    order_id TEXT UNIQUE,
+    payment_key TEXT,
     user_id UUID,
     amount INTEGER NOT NULL,
     status TEXT DEFAULT 'pending', -- pending, success, failed
@@ -38,3 +40,10 @@ CREATE POLICY "Anyone can insert tracking events" ON tracking_events FOR INSERT 
 
 ALTER TABLE search_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can insert search history" ON search_history FOR INSERT WITH CHECK (true);
+
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can insert payments" ON payments FOR INSERT WITH CHECK (true);
+
+-- ⚠️ 기존 테이블이 이미 생성된 경우 아래 마이그레이션 실행:
+-- ALTER TABLE payments ADD COLUMN IF NOT EXISTS order_id TEXT UNIQUE;
+-- ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_key TEXT;
