@@ -146,7 +146,147 @@ const JISIKIN_QUESTIONS = [
 
 내용증명이 필요하시다면 법적 근거가 완벽히 포함된 문서를 무료로 발급받으실 수 있습니다 👉 [장충금 헌터 무료 서비스 바로가기]`,
   },
+  {
+    id: 3,
+    tag: '경매 진행형',
+    tagColor: 'orange' as const,
+    urgency: '즉각 비대면 법적 대응',
+    verdict: '경매와 별개로 미납 월세·부당이득을 청구하고 강제퇴거 절차를 진행할 수 있습니다.',
+    title: '소유 아파트 경매 진행 중 임차인 미납 월세 청구 및 퇴거 방법',
+    body: '소유한 아파트가 경매로 넘어가고 있는데 기존 임차인이 월세를 수개월째 미납 중입니다. 방문 없이 법적으로 처리하려면 어떻게 해야 하나요?',
+    estimatedAmount: '미납액 + 연체이자',
+    period: '전자소송 가능',
+    situation: '경매 진행 중에도 미납 월세 청구권은 독립 존재합니다. 전자내용증명·전자소송으로 방문 없이 비대면 처리 가능합니다.',
+    legalSummary: [
+      {
+        type: 'law' as const,
+        badge: '법령',
+        cite: '민법 제618조·제387조·제397조',
+        quote: '임대차 계약상 임차인의 월세 지급 의무는 계속 유효하며, 연체 시 연 5% 법정이자 부과.',
+        point: '경매 진행과 별개로 미납 월세 + 연체이자 전액 청구 가능합니다.',
+      },
+      {
+        type: 'precedent' as const,
+        badge: '법령',
+        cite: '민법 제741조 (부당이득반환)',
+        quote: '정당한 근거 없이 점유하여 얻은 이익은 반환해야 한다.',
+        point: '계약 종료 후 퇴거 거부 시 부당이득 반환 + 손해배상 청구 가능합니다.',
+      },
+      {
+        type: 'remedy' as const,
+        badge: '강제집행',
+        cite: '민사집행법 제258조 (부동산 인도명령)',
+        quote: '법원 인도명령 결정 후 집행관이 강제퇴거를 집행한다.',
+        point: '전자소송으로 비대면 신청 — 법원 방문 불필요, 평균 2~4주 처리.',
+      },
+    ],
+    actionSteps: [
+      { timing: '오늘', icon: '📧', action: '전자내용증명 발송 (카카오 알림장 앱 또는 우체국 인터넷 등기) — 10분, 소멸시효 즉시 중단' },
+      { timing: '1~2일 내', icon: '⚖️', action: '전자소송(ecfs.scourt.go.kr) 지급명령 신청 — 인지대 소가의 1/10, 법원 방문 불필요' },
+      { timing: '확정 후', icon: '🔒', action: '강제집행 신청 → 급여·통장 압류 + 부동산 인도명령 강제퇴거 (집행관 수수료 10만원 내외)' },
+    ],
+    answer: `방문이 어렵더라도 즉시 법적 절차를 시작하실 수 있습니다. 경매 진행과 관계없이 임차인의 미납 월세 및 연체이자 청구권은 독립적으로 존재합니다.
+
+✅ 결론: 전자내용증명 + 전자소송으로 방문 없이 처리 가능합니다.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+⚖️ 법적 근거
+━━━━━━━━━━━━━━━━━━━━━━━
+① 민법 제618조·제397조: 미납 월세 원금 + 연 5% 법정이자 청구 가능 (판결 후 연 12%)
+② 민법 제741조(부당이득반환): 계약 종료 후 점유 기간 부당이득 추가 청구 가능
+③ 민사집행법 제258조: 법원 인도명령 → 집행관 강제퇴거 집행
+
+내용증명 발송 즉시 소멸시효가 중단되며 법적 효력이 발생합니다.`,
+  },
+  {
+    id: 4,
+    tag: '연체이자 청구형',
+    tagColor: 'purple' as const,
+    urgency: '연체 즉시 청구 가능',
+    verdict: '미납 월세 전액 + 연 5% 법정이자(판결 후 연 12%)까지 즉시 청구할 수 있습니다.',
+    title: '임차인이 월세를 수개월 미납 중입니다. 연체이자까지 청구하고 퇴거시킬 수 있나요?',
+    body: '세입자가 월세를 3개월째 안 내고 있습니다. 연체이자도 받을 수 있는지, 방문하지 않고 법적으로 처리하는 방법을 알고 싶습니다.',
+    estimatedAmount: '미납액 + 연체이자',
+    period: '2개월 연체 시 계약해지 가능',
+    situation: '월세 2회 이상 연체 시 계약 해지 통보가 가능합니다. 전자소송으로 비대면 처리가 가능합니다.',
+    legalSummary: [
+      {
+        type: 'law' as const,
+        badge: '법령',
+        cite: '민법 제397조 + 소송촉진법 제3조',
+        quote: '금전채무 이행지체 시 법정이율 연 5%, 판결 확정 후 연 12% 적용.',
+        point: '미납 월세 원금 + 연 5% → 판결 후 연 12%로 자동 증가합니다.',
+      },
+      {
+        type: 'precedent' as const,
+        badge: '법령',
+        cite: '주택임대차보호법 제6조의2',
+        quote: '임차인이 2기(2개월)의 차임을 연체한 경우 임대인은 계약을 해지할 수 있다.',
+        point: '2개월 이상 연체 확인 즉시 내용증명으로 계약 해지 통보 가능합니다.',
+      },
+      {
+        type: 'remedy' as const,
+        badge: '강제집행',
+        cite: '민사집행법 제258조 + 형법 제327조',
+        quote: '지급명령 확정 후 재산 압류, 퇴거 거부 시 강제집행면탈죄 고소 가능.',
+        point: '전자소송으로 비대면 처리 — 평균 2주 만에 집행권원 확보 가능.',
+      },
+    ],
+    actionSteps: [
+      { timing: '오늘', icon: '📧', action: '전자내용증명: 계약 해지 통보 + 7일 내 퇴거 및 미납액 반환 요구' },
+      { timing: '3~5일 내', icon: '⚖️', action: '전자소송 지급명령 신청: 미납액 + 연체이자 전액 (인지대 소가의 1/10)' },
+      { timing: '미이행 시', icon: '🔒', action: '강제집행 + 부동산 인도명령 → 집행관 강제퇴거 (집행관 수수료 10만원 내외)' },
+    ],
+    answer: `미납 월세 전액과 연 5% 법정이자(판결 후 연 12%)까지 즉시 청구하실 수 있습니다. 방문 없이 전자소송으로 처리 가능합니다.
+
+✅ 결론: 2개월 연체 → 계약 해지 + 미납액 + 연체이자 전액 청구 가능합니다.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+⚖️ 법적 근거
+━━━━━━━━━━━━━━━━━━━━━━━
+① 주택임대차보호법 제6조의2: 2기 연체 시 즉시 계약 해지 가능
+② 민법 제397조: 연체이자 연 5% (법정이율)
+③ 소송촉진법 제3조: 판결 확정 후 연 12%로 자동 상향
+④ 형법 제327조: 퇴거 거부·재산 은닉 시 강제집행면탈죄 고소 가능
+
+전자내용증명 발송 → 전자소송 지급명령 → 강제집행 순서로 방문 없이 진행됩니다.`,
+  },
 ];
+
+// ── 문서 타입별 내용증명 정보 ─────────────────────────────────
+
+function getDocInfo(id: number) {
+  if (id <= 2) return {
+    title: '장기수선충당금\n반환 청구서',
+    subtitle: '우체국 내용증명 직접 발송 가능',
+    items: [
+      { icon: '📄', label: '정식 내용증명서', sub: '우체국 등기·법원 제출 즉시 사용 가능한 법적 문서' },
+      { icon: '⚖️', label: '대법원 판례 인용', sub: '2003다62059 확정 판례 직접 인용 포함' },
+      { icon: '📋', label: '공동주택관리법 근거', sub: '시행령 제31조 제7항 조문 명시' },
+      { icon: '📮', label: '7일 이내 반환 요구 조항', sub: '미이행 시 법적 조치 예고문 포함' },
+    ],
+  };
+  if (id === 3) return {
+    title: '임차인 권리 보호\n내용증명서',
+    subtitle: '경매 진행 중 비대면 법적 대응 문서',
+    items: [
+      { icon: '📄', label: '미납 월세 청구서', sub: '원금 + 연 5% 법정이자 포함 — 우체국·법원 즉시 사용' },
+      { icon: '⚖️', label: '부당이득반환 청구 근거', sub: '민법 제741조 직접 인용 포함' },
+      { icon: '🔒', label: '강제퇴거 예고 조항', sub: '민사집행법 제258조 인도명령 신청 예고 포함' },
+      { icon: '📮', label: '소멸시효 중단 효력', sub: '발송 즉시 소멸시효 중단 (민법 제174조)' },
+    ],
+  };
+  return {
+    title: '미납 월세·연체이자\n청구서',
+    subtitle: '전자소송 연동 비대면 처리 문서',
+    items: [
+      { icon: '📄', label: '계약 해지 통보서', sub: '주택임대차보호법 제6조의2 근거 — 즉시 법적 효력' },
+      { icon: '⚖️', label: '연체이자 계산서 포함', sub: '연 5% 법정이율 → 판결 후 연 12% 자동 반영' },
+      { icon: '🔒', label: '강제퇴거 집행 예고', sub: '민사집행법 제258조 부동산 인도명령 예고 포함' },
+      { icon: '📮', label: '7일 내 이행 요구 조항', sub: '미이행 시 강제집행면탈죄(형법 제327조) 고소 예고' },
+    ],
+  };
+}
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eon';
 
@@ -181,6 +321,199 @@ const InputField = ({ label, placeholder, value, onChange, type = 'text', suffix
     </div>
   </div>
 );
+
+// ── ResultView 컴포넌트 ───────────────────────────────────────
+
+function ResultView({
+  question,
+  onNext,
+}: {
+  question: (typeof JISIKIN_QUESTIONS)[0];
+  onNext: () => void;
+}) {
+  const tc = question.tagColor;
+  const tagCls =
+    tc === 'red' ? 'bg-red-100 text-red-600' :
+    tc === 'orange' ? 'bg-orange-100 text-orange-600' :
+    tc === 'purple' ? 'bg-purple-100 text-purple-600' :
+    'bg-blue-100 text-blue-600';
+  const accentCls =
+    tc === 'red' ? 'bg-red-50 border-red-500' :
+    tc === 'orange' ? 'bg-orange-50 border-orange-500' :
+    tc === 'purple' ? 'bg-purple-50 border-purple-500' :
+    'bg-blue-50 border-blue-500';
+  const iconCls =
+    tc === 'red' ? 'text-red-500' :
+    tc === 'orange' ? 'text-orange-500' :
+    tc === 'purple' ? 'text-purple-500' :
+    'text-blue-500';
+  const doc = getDocInfo(question.id);
+
+  return (
+    <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+
+      {/* 상황 유형 + 긴급도 배지 */}
+      <div className="flex items-center gap-2">
+        <span className={`text-[10px] font-black px-3 py-1.5 rounded-full ${tagCls}`}>
+          {question.tag}
+        </span>
+        <span className="text-[10px] font-black px-3 py-1.5 rounded-full bg-orange-100 text-orange-600">
+          ⚡ {question.urgency}
+        </span>
+      </div>
+
+      {/* 핵심 결론 배너 */}
+      <div className={`rounded-3xl p-5 border-l-4 ${accentCls}`}>
+        <div className="flex items-start gap-3">
+          <ShieldCheck className={`w-5 h-5 flex-shrink-0 mt-0.5 ${iconCls}`} />
+          <div>
+            <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${iconCls}`}>
+              AI 법령 분석 결론
+            </p>
+            <p className="font-black text-sm text-gray-900 leading-relaxed">
+              {question.verdict}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 법령 핵심요약 */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <Scale className="w-4 h-4 text-gray-400" />
+          <p className="text-xs font-black text-gray-400 uppercase tracking-widest">법령 · 판례 핵심요약</p>
+        </div>
+        {question.legalSummary.map((item, i) => {
+          const badgeStyle =
+            item.type === 'law' ? 'bg-indigo-100 text-indigo-700' :
+            item.type === 'precedent' ? 'bg-emerald-100 text-emerald-700' :
+            'bg-amber-100 text-amber-700';
+          const borderStyle =
+            item.type === 'law' ? 'border-indigo-100' :
+            item.type === 'precedent' ? 'border-emerald-100' :
+            'border-amber-100';
+          return (
+            <div key={i} className={`bg-white rounded-2xl border ${borderStyle} shadow-sm overflow-hidden`}>
+              <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${badgeStyle}`}>
+                  {item.badge}
+                </span>
+                <p className="text-xs font-black text-gray-800 leading-tight">{item.cite}</p>
+              </div>
+              <div className="mx-4 mb-2 px-3 py-2 bg-gray-50 rounded-xl border-l-2 border-gray-300">
+                <p className="text-xs text-gray-600 font-medium leading-relaxed italic">
+                  &ldquo;{item.quote}&rdquo;
+                </p>
+              </div>
+              <div className="px-4 pb-4 flex items-start gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-500 font-medium leading-relaxed">{item.point}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 지금 당장 해야 할 행동 단계 */}
+      <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white/20 shadow-sm space-y-3">
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">지금 당장 해야 할 일</p>
+        {question.actionSteps.map((s, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <span className="text-lg flex-shrink-0">{s.icon}</span>
+            <div>
+              <span className="text-[10px] font-black text-[#00A3FF] bg-blue-50 px-2 py-0.5 rounded-full">
+                {s.timing}
+              </span>
+              <p className="text-xs text-gray-700 font-medium leading-relaxed mt-1">{s.action}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 신뢰 배지 바 */}
+      <div className="flex items-center justify-between bg-white/60 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/30">
+        {[
+          { icon: '🏛️', text: '법원 제출 서식' },
+          { icon: '📮', text: '우체국 직발송 가능' },
+          { icon: '✅', text: '법무사 검수 완료' },
+        ].map(({ icon, text }) => (
+          <div key={text} className="flex items-center gap-1.5">
+            <span className="text-sm">{icon}</span>
+            <span className="text-[10px] font-black text-gray-600">{text}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 내용증명 PDF CTA */}
+      <div className="rounded-[32px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+        {/* 문서 헤더 */}
+        <div className="bg-gradient-to-r from-[#0A0F1E] to-[#111827] px-6 pt-6 pb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+            <span className="ml-2 text-[10px] text-white/40 font-mono">{doc.subtitle}</span>
+          </div>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">내용증명 PDF 즉시 발급</p>
+              <h3 className="text-white font-black text-lg leading-tight whitespace-pre-line">{doc.title}</h3>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-white/35 text-[10px] line-through">법무사 의뢰 30~50만원</p>
+              <p className="text-[#00A3FF] font-black text-2xl">2,900원</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 포함 내용 */}
+        <div className="bg-[#0D1420] px-6 py-4 space-y-2.5">
+          {doc.items.map((d) => (
+            <div key={d.label} className="flex items-center gap-3">
+              <span className="text-base w-6 text-center flex-shrink-0">{d.icon}</span>
+              <div>
+                <p className="text-white text-xs font-black leading-none">{d.label}</p>
+                <p className="text-white/40 text-[10px] font-medium mt-0.5">{d.sub}</p>
+              </div>
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-400 ml-auto flex-shrink-0" />
+            </div>
+          ))}
+        </div>
+
+        {/* 신뢰 수치 + CTA 버튼 */}
+        <div className="bg-[#111827] px-6 pt-4 pb-6 space-y-4">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { val: '95%+', label: '법적 승소율' },
+              { val: '즉시', label: '효력 발생' },
+              { val: '10초', label: '발급 완료' },
+            ].map(({ val, label }) => (
+              <div key={label} className="bg-white/5 rounded-2xl py-2.5 px-1">
+                <p className="text-[#00A3FF] font-black text-base">{val}</p>
+                <p className="text-white/40 text-[9px] font-bold mt-0.5">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={onNext}
+            className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_30px_rgba(0,163,255,0.4)] active:scale-95 transition-all text-base"
+          >
+            <CreditCard className="w-5 h-5" />
+            내용증명 PDF 지금 받기 — 2,900원
+          </button>
+
+          <div className="flex items-center justify-center gap-3 text-[10px] text-white/30 font-medium">
+            <span>카카오페이</span><span>·</span>
+            <span>토스페이</span><span>·</span>
+            <span>신용/체크카드</span>
+          </div>
+        </div>
+      </div>
+
+    </motion.div>
+  );
+}
 
 // ── 앱 타입 ───────────────────────────────────────────────────
 
@@ -415,168 +748,10 @@ function JangChungGeumApp() {
 
           {/* ── RESULT: 세입자 맞춤 랜딩 ── */}
           {step === 'RESULT' && selectedQuestion && (
-            <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-
-              {/* 상황 유형 + 긴급도 배지 */}
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-black px-3 py-1.5 rounded-full ${selectedQuestion.tagColor === 'red' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-                  {selectedQuestion.tag}
-                </span>
-                <span className="text-[10px] font-black px-3 py-1.5 rounded-full bg-orange-100 text-orange-600">
-                  ⚡ {selectedQuestion.urgency}
-                </span>
-              </div>
-
-              {/* 핵심 결론 배너 */}
-              <div className={`rounded-3xl p-5 border-l-4 ${selectedQuestion.tagColor === 'red' ? 'bg-red-50 border-red-500' : 'bg-blue-50 border-blue-500'}`}>
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className={`w-5 h-5 flex-shrink-0 mt-0.5 ${selectedQuestion.tagColor === 'red' ? 'text-red-500' : 'text-blue-500'}`} />
-                  <div>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${selectedQuestion.tagColor === 'red' ? 'text-red-500' : 'text-blue-500'}`}>
-                      AI 법령 분석 결론
-                    </p>
-                    <p className="font-black text-sm text-gray-900 leading-relaxed">
-                      {selectedQuestion.verdict}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 법령 핵심요약 */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <Scale className="w-4 h-4 text-gray-400" />
-                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">법령 · 판례 핵심요약</p>
-                </div>
-
-                {selectedQuestion.legalSummary.map((item, i) => {
-                  const badgeStyle =
-                    item.type === 'law'
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : item.type === 'precedent'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-amber-100 text-amber-700';
-                  const borderStyle =
-                    item.type === 'law'
-                      ? 'border-indigo-100'
-                      : item.type === 'precedent'
-                      ? 'border-emerald-100'
-                      : 'border-amber-100';
-
-                  return (
-                    <div key={i} className={`bg-white rounded-2xl border ${borderStyle} shadow-sm overflow-hidden`}>
-                      {/* 카드 헤더 */}
-                      <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${badgeStyle}`}>
-                          {item.badge}
-                        </span>
-                        <p className="text-xs font-black text-gray-800 leading-tight">{item.cite}</p>
-                      </div>
-                      {/* 인용문 */}
-                      <div className="mx-4 mb-2 px-3 py-2 bg-gray-50 rounded-xl border-l-2 border-gray-300">
-                        <p className="text-xs text-gray-600 font-medium leading-relaxed italic">
-                          "{item.quote}"
-                        </p>
-                      </div>
-                      {/* 핵심 포인트 */}
-                      <div className="px-4 pb-4 flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-gray-500 font-medium leading-relaxed">{item.point}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* 지금 당장 해야 할 행동 단계 */}
-              <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white/20 shadow-sm space-y-3">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">지금 당장 해야 할 일</p>
-                {selectedQuestion.actionSteps.map((s, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="flex-shrink-0 text-center">
-                      <span className="text-lg">{s.icon}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-black text-[#00A3FF] bg-blue-50 px-2 py-0.5 rounded-full">{s.timing}</span>
-                      <p className="text-xs text-gray-700 font-medium leading-relaxed mt-1">{s.action}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* ── 내용증명 PDF CTA (신뢰성 강화) ── */}
-              <div className="rounded-[32px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-                {/* 상단: 공식 문서 헤더 */}
-                <div className="bg-gradient-to-r from-[#0A0F1E] to-[#111827] px-6 pt-6 pb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                    <span className="ml-2 text-[10px] text-white/30 font-mono">법적 효력 문서</span>
-                  </div>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-white/50 text-[10px] font-black uppercase tracking-widest">내용증명 PDF 즉시 발급</p>
-                      <h3 className="text-white font-black text-lg mt-0.5 leading-tight">
-                        장기수선충당금<br />반환 청구서
-                      </h3>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-white/40 text-[10px] line-through">무료로 대충 만든 PDF</p>
-                      <p className="text-[#00A3FF] font-black text-2xl">2,900원</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 중단: 포함 내용 */}
-                <div className="bg-[#0D1420] px-6 py-4 space-y-2.5">
-                  {[
-                    { icon: '📄', label: '정식 내용증명서', sub: '법원 제출 · 우체국 발송 가능한 법적 문서' },
-                    { icon: '⚖️', label: '대법원 판례 인용', sub: '2003다62059 확정 판례 직접 인용 포함' },
-                    { icon: '📋', label: '공동주택관리법 근거', sub: '시행령 제31조 제7항 조문 명시' },
-                    { icon: '📮', label: '7일 이내 반환 요구 조항', sub: '미이행 시 법적 조치 예고문 포함' },
-                  ].map((d) => (
-                    <div key={d.label} className="flex items-center gap-3">
-                      <span className="text-base w-6 text-center flex-shrink-0">{d.icon}</span>
-                      <div>
-                        <p className="text-white text-xs font-black leading-none">{d.label}</p>
-                        <p className="text-white/40 text-[10px] font-medium mt-0.5">{d.sub}</p>
-                      </div>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 ml-auto flex-shrink-0" />
-                    </div>
-                  ))}
-                </div>
-
-                {/* 하단: 신뢰 지표 + 버튼 */}
-                <div className="bg-[#111827] px-6 pt-4 pb-6 space-y-4">
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    {[
-                      { val: '95%+', label: '임차인 승소율' },
-                      { val: '즉시', label: '법적 효력 발생' },
-                      { val: '10초', label: '발급 소요 시간' },
-                    ].map(({ val, label }) => (
-                      <div key={label} className="bg-white/5 rounded-2xl py-2.5 px-1">
-                        <p className="text-[#00A3FF] font-black text-base">{val}</p>
-                        <p className="text-white/40 text-[9px] font-bold mt-0.5">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => setStep('INPUT')}
-                    className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_30px_rgba(0,163,255,0.35)] active:scale-95 transition-all text-sm"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    내용증명 PDF 발급받기 — 2,900원
-                  </button>
-
-                  <p className="text-center text-[10px] text-white/25 font-medium">
-                    카카오페이 · 토스페이 · 신용/체크카드 결제 가능
-                  </p>
-                </div>
-              </div>
-
-            </motion.div>
+            <ResultView
+              question={selectedQuestion}
+              onNext={() => setStep('INPUT')}
+            />
           )}
 
           {/* ── INPUT: 사용자 정보 입력 + 환급액 계산 ── */}
