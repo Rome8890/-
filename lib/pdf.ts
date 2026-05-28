@@ -203,7 +203,7 @@ export const generateKoreanPDF = (data: PDFData) => {
   <h2>3. 요청 사항</h2>
 
   <p class="body-text">
-    위 법령 및 대법원 판례에 의거하여, 본인이 임대차 기간 중 대신 납부한 장기수선충당금
+    위 법령에 의거하여, 본인이 임대차 기간 중 대신 납부한 장기수선충당금
     합계 <strong>금 ${formattedAmount}원</strong>을 본 내용증명 수령일로부터
     <strong>7일 이내</strong>에 반환하여 주실 것을 정중히 요청드립니다.
   </p>
