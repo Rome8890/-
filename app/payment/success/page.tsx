@@ -52,6 +52,14 @@ function SuccessContent() {
       .catch(() => setStatus('error'));
   }, [searchParams]);
 
+  // 결제 성공 확인 즉시 PDF 자동 오픈
+  useEffect(() => {
+    if (status === 'success' && userData) {
+      const timer = setTimeout(() => generateKoreanPDF(userData), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [status, userData]);
+
   const handleDownloadPDF = () => {
     if (userData) generateKoreanPDF(userData);
   };
