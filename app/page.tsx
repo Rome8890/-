@@ -380,6 +380,15 @@ function ResultView({
         </div>
       </div>
 
+      {/* 상단 미니 CTA — 스크롤 없이 바로 결제 */}
+      <button
+        onClick={onNext}
+        className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(0,163,255,0.3)] active:scale-95 transition-all text-sm"
+      >
+        <Download className="w-4 h-4" />
+        내용증명 PDF 지금 받기 — 2,900원
+      </button>
+
       {/* 법령 핵심요약 */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-3">
@@ -506,7 +515,7 @@ function ResultView({
             ].map(({ icon, label }) => (
               <div key={label} className="flex flex-col items-center gap-0.5">
                 <span className="text-lg">{icon}</span>
-                <span className="text-[9px] font-black text-gray-500">{label}</span>
+                <span className="text-[10px] font-black text-gray-500">{label}</span>
               </div>
             ))}
           </div>
@@ -537,7 +546,7 @@ function ResultView({
             ].map(({ val, label }) => (
               <div key={label} className="bg-white/5 rounded-xl py-2.5 px-1">
                 <p className="text-[#00A3FF] font-black text-base">{val}</p>
-                <p className="text-white/40 text-[9px] font-bold mt-0.5">{label}</p>
+                <p className="text-white/40 text-[10px] font-bold mt-0.5">{label}</p>
               </div>
             ))}
           </div>
