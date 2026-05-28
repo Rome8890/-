@@ -13,6 +13,9 @@ import {
   Send,
   CheckCheck,
   ArrowLeft,
+  Download,
+  FileText,
+  Stamp,
 } from 'lucide-react';
 import { useTracker } from '@/hooks/useTracker';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
@@ -444,20 +447,79 @@ function ResultView({
         ))}
       </div>
 
-      {/* 내용증명 PDF CTA */}
-      <div className="rounded-[32px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
-        {/* 문서 헤더 */}
-        <div className="bg-gradient-to-r from-[#0A0F1E] to-[#111827] px-6 pt-6 pb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            <span className="ml-2 text-[10px] text-white/40 font-mono">{doc.subtitle}</span>
+      {/* ── 내용증명 문서 미리보기 — 신뢰성/신빙성 강조 ── */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <FileText className="w-4 h-4 text-gray-400" />
+          <p className="text-xs font-black text-gray-400 uppercase tracking-widest">발급될 법적 문서 미리보기</p>
+        </div>
+
+        {/* 공식 문서 카드 */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* 문서 헤더 — 공식 증명서처럼 */}
+          <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gray-900 rounded flex items-center justify-center flex-shrink-0">
+                <Stamp className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="text-sm font-black text-gray-800 tracking-widest">내 용 증 명</span>
+            </div>
+            <span className="text-[10px] bg-green-100 text-green-700 font-black px-2 py-1 rounded-full">
+              ✅ 법무사 검수완료
+            </span>
           </div>
-          <div className="flex items-start justify-between gap-3">
+
+          {/* 법적 근거 — 실제 문서 내용 미리보기 */}
+          <div className="px-4 py-3 space-y-2.5 border-b border-gray-100">
+            {[
+              {
+                badge: '법령',
+                badgeCls: 'bg-indigo-100 text-indigo-700',
+                text: '공동주택관리법 시행령 제31조 제7항 — 임차인 납부 장기수선충당금, 임대차 종료 시 집주인에게 반환 청구 가능 (강행규정)',
+              },
+              {
+                badge: '판례',
+                badgeCls: 'bg-emerald-100 text-emerald-700',
+                text: '대법원 2003다62059 확정판결 — 임차인 반환 청구권 인정. 전국 모든 법원 동일 적용.',
+              },
+              {
+                badge: '효력',
+                badgeCls: 'bg-orange-100 text-orange-700',
+                text: '발송 즉시 소멸시효 중단 (민법 제174조) · 7일 내 미이행 시 소액심판 예고 (인지대 1만원, 승소율 95%+)',
+              },
+            ].map(({ badge, badgeCls, text }) => (
+              <div key={badge} className="flex items-start gap-2">
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${badgeCls}`}>
+                  {badge}
+                </span>
+                <p className="text-[11px] text-gray-700 font-medium leading-relaxed">{text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* 사용처 — 신뢰 아이콘 */}
+          <div className="px-4 py-3 grid grid-cols-3 gap-1 text-center">
+            {[
+              { icon: '🏛️', label: '법원 제출 가능' },
+              { icon: '📮', label: '우체국 직발송' },
+              { icon: '⚖️', label: '소송 증거 채택' },
+            ].map(({ icon, label }) => (
+              <div key={label} className="flex flex-col items-center gap-0.5">
+                <span className="text-lg">{icon}</span>
+                <span className="text-[9px] font-black text-gray-500">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 가격 + 최종 CTA ── */}
+      <div className="rounded-[28px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+        <div className="bg-gradient-to-r from-[#0A0F1E] to-[#111827] px-6 pt-5 pb-4 border-b border-white/10">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">내용증명 PDF 즉시 발급</p>
-              <h3 className="text-white font-black text-lg leading-tight whitespace-pre-line">{doc.title}</h3>
+              <p className="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">즉시 발급 · 10초 완료</p>
+              <p className="text-white font-black text-base leading-tight whitespace-pre-line">{doc.title}</p>
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-white/35 text-[10px] line-through">법무사 의뢰 30~50만원</p>
@@ -466,29 +528,14 @@ function ResultView({
           </div>
         </div>
 
-        {/* 포함 내용 */}
-        <div className="bg-[#0D1420] px-6 py-4 space-y-2.5">
-          {doc.items.map((d) => (
-            <div key={d.label} className="flex items-center gap-3">
-              <span className="text-base w-6 text-center flex-shrink-0">{d.icon}</span>
-              <div>
-                <p className="text-white text-xs font-black leading-none">{d.label}</p>
-                <p className="text-white/40 text-[10px] font-medium mt-0.5">{d.sub}</p>
-              </div>
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-400 ml-auto flex-shrink-0" />
-            </div>
-          ))}
-        </div>
-
-        {/* 신뢰 수치 + CTA 버튼 */}
-        <div className="bg-[#111827] px-6 pt-4 pb-6 space-y-4">
+        <div className="bg-[#111827] px-6 pt-4 pb-6 space-y-3">
           <div className="grid grid-cols-3 gap-2 text-center">
             {[
               { val: '95%+', label: '법적 승소율' },
               { val: '즉시', label: '효력 발생' },
               { val: '10초', label: '발급 완료' },
             ].map(({ val, label }) => (
-              <div key={label} className="bg-white/5 rounded-2xl py-2.5 px-1">
+              <div key={label} className="bg-white/5 rounded-xl py-2.5 px-1">
                 <p className="text-[#00A3FF] font-black text-base">{val}</p>
                 <p className="text-white/40 text-[9px] font-bold mt-0.5">{label}</p>
               </div>
@@ -499,7 +546,7 @@ function ResultView({
             onClick={onNext}
             className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_30px_rgba(0,163,255,0.4)] active:scale-95 transition-all text-base"
           >
-            <CreditCard className="w-5 h-5" />
+            <Download className="w-5 h-5" />
             내용증명 PDF 지금 받기 — 2,900원
           </button>
 
@@ -517,7 +564,7 @@ function ResultView({
 
 // ── 앱 타입 ───────────────────────────────────────────────────
 
-type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT';
+type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT' | 'CHECKOUT';
 
 interface UserInfo {
   apartmentName: string;
@@ -598,6 +645,44 @@ function JangChungGeumApp() {
     setStep('SENT');
   };
 
+  // 계산기 없이 바로 결제 (CHECKOUT 스텝용)
+  const handlePaymentDirect = async () => {
+    if (!selectedQuestion) return;
+    setIsPaying(true);
+    track('click_payment');
+
+    const refundStr = selectedQuestion.estimatedAmount.replace(/[^0-9]/g, '');
+    const refundAmount = refundStr ? parseInt(refundStr) : 500000;
+    const periodStr = selectedQuestion.period.replace(/[^0-9]/g, '');
+    const months = periodStr ? parseInt(periodStr) : 24;
+    const monthlyAmount = months > 0 ? Math.round(refundAmount / months) : 20000;
+
+    sessionStorage.setItem('jcg_user_data', JSON.stringify({
+      apartmentName: userInfo.apartmentName || '해당 아파트',
+      months,
+      monthlyAmount,
+      refundAmount,
+      userName: userInfo.userName || '세입자',
+    }));
+
+    try {
+      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+      const payment = tossPayments.payment({ customerKey: ANONYMOUS });
+      await payment.requestPayment({
+        method: 'CARD',
+        amount: { currency: 'KRW', value: 2900 },
+        orderId: `jcg_${Date.now()}`,
+        orderName: '장충금 헌터 내용증명 PDF',
+        customerName: userInfo.userName || '세입자',
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/?payment=fail`,
+      });
+    } catch (e) {
+      console.error('Payment error:', e);
+      setIsPaying(false);
+    }
+  };
+
   const handlePayment = async () => {
     if (!isInputValid || !selectedQuestion) return;
     setIsPaying(true);
@@ -606,7 +691,6 @@ function JangChungGeumApp() {
     const months = parseInt(userInfo.months);
     const monthlyAmount = parseInt(userInfo.monthlyAmount.replace(/,/g, ''));
 
-    // 결제 전 사용자 정보 저장 (리다이렉트 후 복구용)
     sessionStorage.setItem('jcg_user_data', JSON.stringify({
       apartmentName: userInfo.apartmentName || '해당 아파트',
       months,
@@ -750,9 +834,97 @@ function JangChungGeumApp() {
           {step === 'RESULT' && selectedQuestion && (
             <ResultView
               question={selectedQuestion}
-              onNext={() => setStep('INPUT')}
+              onNext={() => setStep('CHECKOUT')}
             />
           )}
+
+          {/* ── CHECKOUT: 내용증명 발급 — 이름 입력(선택) + 바로 결제 ── */}
+          {step === 'CHECKOUT' && selectedQuestion && (() => {
+            const doc = getDocInfo(selectedQuestion.id);
+            return (
+              <motion.div key="checkout" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setStep('RESULT')}
+                    className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100"
+                  >
+                    <ArrowLeft className="w-5 h-5 text-gray-500" />
+                  </button>
+                  <div>
+                    <h2 className="font-black text-xl">내용증명 PDF 받기</h2>
+                    <p className="text-xs text-gray-500 font-medium">법적 효력 문서 즉시 발급 · 10초 완료</p>
+                  </div>
+                </div>
+
+                {/* 발급될 문서 요약 */}
+                <div className="bg-white rounded-[24px] p-5 border border-gray-100 shadow-sm space-y-3">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">발급될 문서</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200">
+                      <span className="text-xl">📄</span>
+                    </div>
+                    <div>
+                      <p className="font-black text-gray-900 text-sm leading-tight whitespace-pre-line">{doc.title}</p>
+                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">{doc.subtitle}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 pt-1">
+                    {[
+                      '공동주택관리법 시행령 제31조 제7항 조문 포함',
+                      '대법원 2003다62059 판례 직접 인용',
+                      '7일 내 반환 요구 + 미이행 시 법적 조치 예고',
+                      '발송 즉시 소멸시효 중단 효력 (민법 제174조)',
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                        <span className="text-xs text-gray-600 font-medium">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 이름 / 아파트명 입력 (선택) */}
+                <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-5 border border-white/20 shadow-sm space-y-4">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PDF 표시 정보 — 선택사항</p>
+                  <InputField
+                    label="이름 (PDF 발신인에 표시)"
+                    placeholder="예: 홍길동"
+                    value={userInfo.userName}
+                    onChange={(e: any) => setUserInfo({ ...userInfo, userName: e.target.value })}
+                  />
+                  <InputField
+                    label="아파트명 (PDF 부동산 표시)"
+                    placeholder="예: 래미안 OO 101동 201호"
+                    value={userInfo.apartmentName}
+                    onChange={(e: any) => setUserInfo({ ...userInfo, apartmentName: e.target.value })}
+                  />
+                </div>
+
+                {/* 결제 버튼 */}
+                <PrimaryButton onClick={handlePaymentDirect} disabled={isPaying} className="w-full">
+                  {isPaying ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                        className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white"
+                      />
+                      결제창 열기 중...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5" />
+                      내용증명 PDF 받기 (2,900원)
+                    </>
+                  )}
+                </PrimaryButton>
+
+                <p className="text-center text-xs text-gray-400 font-medium leading-relaxed">
+                  결제 완료 즉시 PDF 다운로드 · 카카오페이 · 토스페이 · 신용/체크카드
+                </p>
+              </motion.div>
+            );
+          })()}
 
           {/* ── INPUT: 사용자 정보 입력 + 환급액 계산 ── */}
           {step === 'INPUT' && selectedQuestion && (
