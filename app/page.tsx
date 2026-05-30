@@ -686,9 +686,14 @@ function JangChungGeumApp() {
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/?payment=fail`,
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error('Payment error:', e);
       setIsPaying(false);
+      const msg = e?.message || '';
+      // 사용자가 결제창을 닫은 경우는 무시
+      if (!msg.includes('취소') && !msg.includes('cancel') && !msg.includes('CANCEL')) {
+        alert(`결제 오류가 발생했습니다.\n\n${msg || '잠시 후 다시 시도해 주세요.'}`);
+      }
     }
   };
 

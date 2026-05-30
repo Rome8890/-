@@ -235,18 +235,44 @@ export const generateKoreanPDF = (data: PDFData) => {
 </body>
 </html>`;
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+  // 팝업/새탭 없이 현재 페이지 위에 오버레이로 표시 (차단 없음)
+  const overlay = document.createElement('div');
+  overlay.id = 'pdf-overlay';
+  overlay.style.cssText = [
+    'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
+    'z-index:99999', 'background:white', 'display:flex', 'flex-direction:column',
+  ].join(';');
 
-  // 팝업 차단 우회: <a> 태그로 새 탭 열기 (user interaction과 동일 취급)
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const toolbar = document.createElement('div');
+  toolbar.style.cssText = [
+    'display:flex', 'align-items:center', 'justify-content:space-between',
+    'padding:12px 20px', 'background:#1a1a1a', 'flex-shrink:0',
+  ].join(';');
 
-  // URL 메모리 해제 (약간 지연)
-  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  const printBtn = document.createElement('button');
+  printBtn.innerHTML = '🖨️ PDF로 저장 / 인쇄';
+  printBtn.style.cssText = 'background:#00A3FF;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;';
+  printBtn.onclick = () => iframe.contentWindow?.print();
+
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '✕ 닫기';
+  closeBtn.style.cssText = 'background:#555;color:white;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-left:12px;';
+  closeBtn.onclick = () => overlay.remove();
+
+  toolbar.appendChild(printBtn);
+  toolbar.appendChild(closeBtn);
+
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'flex:1;width:100%;border:none;';
+
+  overlay.appendChild(toolbar);
+  overlay.appendChild(iframe);
+  document.body.appendChild(overlay);
+
+  const doc = iframe.contentDocument || (iframe.contentWindow as any)?.document;
+  if (doc) {
+    doc.open();
+    doc.write(html);
+    doc.close();
+  }
 };
