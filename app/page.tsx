@@ -914,6 +914,30 @@ function JangChungGeumApp() {
                   />
                 </div>
 
+                {/* 내용증명 미리보기 버튼 (결제 없이) */}
+                <button
+                  onClick={() => {
+                    const refundStr = selectedQuestion.estimatedAmount.replace(/[^0-9]/g, '');
+                    const refundAmount = refundStr ? parseInt(refundStr) : 500000;
+                    const periodStr = selectedQuestion.period.replace(/[^0-9]/g, '');
+                    const months = periodStr ? parseInt(periodStr) : 24;
+                    const monthlyAmount = months > 0 ? Math.round(refundAmount / months) : 20000;
+                    import('@/lib/pdf').then(({ generateKoreanPDF }) => {
+                      generateKoreanPDF({
+                        apartmentName: userInfo.apartmentName || '해당 아파트',
+                        months,
+                        monthlyAmount,
+                        refundAmount,
+                        userName: userInfo.userName || '세입자',
+                      });
+                    });
+                  }}
+                  className="w-full border-2 border-[#00A3FF] text-[#00A3FF] font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+                >
+                  <FileText className="w-5 h-5" />
+                  내용증명서 미리보기 (무료)
+                </button>
+
                 {/* 결제 버튼 */}
                 <PrimaryButton onClick={handlePaymentDirect} disabled={isPaying} className="w-full">
                   {isPaying ? (
