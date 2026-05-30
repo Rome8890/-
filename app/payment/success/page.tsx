@@ -52,14 +52,6 @@ function SuccessContent() {
       .catch(() => setStatus('error'));
   }, [searchParams]);
 
-  // 결제 성공 확인 즉시 PDF 자동 오픈
-  useEffect(() => {
-    if (status === 'success' && userData) {
-      const timer = setTimeout(() => generateKoreanPDF(userData), 800);
-      return () => clearTimeout(timer);
-    }
-  }, [status, userData]);
-
   const handleDownloadPDF = () => {
     if (userData) generateKoreanPDF(userData);
   };
@@ -129,10 +121,13 @@ function SuccessContent() {
         {/* PDF 다운로드 버튼 */}
         <button
           onClick={handleDownloadPDF}
-          className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(0,163,255,0.3)] active:scale-95 transition-all"
+          className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-5 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-[0_10px_30px_rgba(0,163,255,0.3)] active:scale-95 transition-all"
         >
-          <Download className="w-5 h-5" />
-          내용증명 PDF 다운로드
+          <span className="flex items-center gap-2">
+            <Download className="w-5 h-5" />
+            내용증명 PDF 다운로드
+          </span>
+          <span className="text-[11px] font-medium opacity-80">새 탭에서 열립니다 → 인쇄 버튼 클릭</span>
         </button>
 
         {/* 안내 */}

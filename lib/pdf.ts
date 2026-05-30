@@ -237,8 +237,16 @@ export const generateKoreanPDF = (data: PDFData) => {
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const printWindow = window.open(url, '_blank', 'width=850,height=1100');
-  if (printWindow) {
-    printWindow.addEventListener('load', () => URL.revokeObjectURL(url));
-  }
+
+  // 팝업 차단 우회: <a> 태그로 새 탭 열기 (user interaction과 동일 취급)
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  // URL 메모리 해제 (약간 지연)
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 };
