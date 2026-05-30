@@ -580,6 +580,11 @@ interface UserInfo {
   months: string;
   monthlyAmount: string;
   userName: string;
+  userAddress: string;
+  landlordName: string;
+  landlordAddress: string;
+  contractStart: string;
+  contractEnd: string;
 }
 
 // ── 메인 앱 ───────────────────────────────────────────────────
@@ -594,6 +599,11 @@ function JangChungGeumApp() {
     months: '',
     monthlyAmount: '',
     userName: '',
+    userAddress: '',
+    landlordName: '',
+    landlordAddress: '',
+    contractStart: '',
+    contractEnd: '',
   });
   const [isPaying, setIsPaying] = useState(false);
   const { track } = useTracker();
@@ -672,6 +682,11 @@ function JangChungGeumApp() {
       monthlyAmount,
       refundAmount,
       userName: userInfo.userName || '세입자',
+      userAddress: userInfo.userAddress,
+      landlordName: userInfo.landlordName,
+      landlordAddress: userInfo.landlordAddress,
+      contractStart: userInfo.contractStart,
+      contractEnd: userInfo.contractEnd,
     }));
 
     try {
@@ -897,20 +912,64 @@ function JangChungGeumApp() {
                   </div>
                 </div>
 
-                {/* 이름 / 아파트명 입력 (선택) */}
+                {/* 입력 정보 */}
                 <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-5 border border-white/20 shadow-sm space-y-4">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PDF 표시 정보 — 선택사항</p>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">발신인 (임차인) 정보</p>
+                    <p className="text-[10px] text-red-400 font-bold">※ 우체국 발송 필수 — 정확히 입력</p>
+                  </div>
                   <InputField
-                    label="이름 (PDF 발신인에 표시)"
+                    label="임차인 이름"
                     placeholder="예: 홍길동"
                     value={userInfo.userName}
                     onChange={(e: any) => setUserInfo({ ...userInfo, userName: e.target.value })}
                   />
                   <InputField
-                    label="아파트명 (PDF 부동산 표시)"
+                    label="임차인 주소 (현재 거주지)"
+                    placeholder="예: 서울시 강남구 역삼동 123-4 래미안 101동 201호"
+                    value={userInfo.userAddress}
+                    onChange={(e: any) => setUserInfo({ ...userInfo, userAddress: e.target.value })}
+                  />
+                </div>
+
+                <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-5 border border-white/20 shadow-sm space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">수신인 (집주인) 정보</p>
+                    <p className="text-[10px] text-red-400 font-bold">※ 우체국 발송 필수 — 등기 수신 주소</p>
+                  </div>
+                  <InputField
+                    label="집주인 이름"
+                    placeholder="예: 김집주인"
+                    value={userInfo.landlordName}
+                    onChange={(e: any) => setUserInfo({ ...userInfo, landlordName: e.target.value })}
+                  />
+                  <InputField
+                    label="집주인 주소 (등기 발송 주소)"
+                    placeholder="예: 서울시 서초구 서초동 456-7"
+                    value={userInfo.landlordAddress}
+                    onChange={(e: any) => setUserInfo({ ...userInfo, landlordAddress: e.target.value })}
+                  />
+                </div>
+
+                <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-5 border border-white/20 shadow-sm space-y-4">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">부동산 및 계약 정보</p>
+                  <InputField
+                    label="아파트명 (부동산 표시)"
                     placeholder="예: 래미안 OO 101동 201호"
                     value={userInfo.apartmentName}
                     onChange={(e: any) => setUserInfo({ ...userInfo, apartmentName: e.target.value })}
+                  />
+                  <InputField
+                    label="임대차 계약 시작일"
+                    placeholder="예: 2022년 3월 1일"
+                    value={userInfo.contractStart}
+                    onChange={(e: any) => setUserInfo({ ...userInfo, contractStart: e.target.value })}
+                  />
+                  <InputField
+                    label="임대차 계약 종료일"
+                    placeholder="예: 2024년 2월 28일"
+                    value={userInfo.contractEnd}
+                    onChange={(e: any) => setUserInfo({ ...userInfo, contractEnd: e.target.value })}
                   />
                 </div>
 
@@ -929,6 +988,11 @@ function JangChungGeumApp() {
                         monthlyAmount,
                         refundAmount,
                         userName: userInfo.userName || '세입자',
+                        userAddress: userInfo.userAddress,
+                        landlordName: userInfo.landlordName,
+                        landlordAddress: userInfo.landlordAddress,
+                        contractStart: userInfo.contractStart,
+                        contractEnd: userInfo.contractEnd,
                       });
                     });
                   }}
