@@ -337,19 +337,19 @@ function ResultView({
   const tc = question.tagColor;
   const tagCls =
     tc === 'red' ? 'bg-red-100 text-red-600' :
-    tc === 'orange' ? 'bg-orange-100 text-orange-600' :
-    tc === 'purple' ? 'bg-purple-100 text-purple-600' :
-    'bg-blue-100 text-blue-600';
+      tc === 'orange' ? 'bg-orange-100 text-orange-600' :
+        tc === 'purple' ? 'bg-purple-100 text-purple-600' :
+          'bg-blue-100 text-blue-600';
   const accentCls =
     tc === 'red' ? 'bg-red-50 border-red-500' :
-    tc === 'orange' ? 'bg-orange-50 border-orange-500' :
-    tc === 'purple' ? 'bg-purple-50 border-purple-500' :
-    'bg-blue-50 border-blue-500';
+      tc === 'orange' ? 'bg-orange-50 border-orange-500' :
+        tc === 'purple' ? 'bg-purple-50 border-purple-500' :
+          'bg-blue-50 border-blue-500';
   const iconCls =
     tc === 'red' ? 'text-red-500' :
-    tc === 'orange' ? 'text-orange-500' :
-    tc === 'purple' ? 'text-purple-500' :
-    'text-blue-500';
+      tc === 'orange' ? 'text-orange-500' :
+        tc === 'purple' ? 'text-purple-500' :
+          'text-blue-500';
   const doc = getDocInfo(question.id);
 
   return (
@@ -398,12 +398,12 @@ function ResultView({
         {question.legalSummary.map((item, i) => {
           const badgeStyle =
             item.type === 'law' ? 'bg-indigo-100 text-indigo-700' :
-            item.type === 'precedent' ? 'bg-emerald-100 text-emerald-700' :
-            'bg-amber-100 text-amber-700';
+              item.type === 'precedent' ? 'bg-emerald-100 text-emerald-700' :
+                'bg-amber-100 text-amber-700';
           const borderStyle =
             item.type === 'law' ? 'border-indigo-100' :
-            item.type === 'precedent' ? 'border-emerald-100' :
-            'border-amber-100';
+              item.type === 'precedent' ? 'border-emerald-100' :
+                'border-amber-100';
           return (
             <div key={i} className={`bg-white rounded-2xl border ${borderStyle} shadow-sm overflow-hidden`}>
               <div className="px-4 pt-4 pb-2 flex items-center gap-2">
@@ -612,6 +612,38 @@ function JangChungGeumApp() {
   useEffect(() => {
     const from = searchParams.get('from');
     const qid = searchParams.get('qid');
+    const dynamicId = searchParams.get('id'); // Supabase 동적 ID
+
+    // 동적 ID로 유입 (신규 방식)
+    if (dynamicId) {
+      fetch(`/api/answer?id=${dynamicId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.id) {
+            const pc = data.page_content || {};
+            const dynamicQ = {
+              id: 0,
+              tag: pc.tag || '장충금 분석',
+              tagColor: 'blue' as const,
+              urgency: '법적 검토 완료',
+              verdict: pc.verdict || data.answer_text?.slice(0, 60) || '',
+              title: data.question_title,
+              body: data.question_body || '',
+              estimatedAmount: '',
+              period: '',
+              situation: '',
+              legalSummary: pc.legalSummary || [],
+              actionSteps: pc.actionSteps || [],
+              answer: data.answer_text,
+            };
+            setSelectedQuestion(dynamicQ as typeof JISIKIN_QUESTIONS[0]);
+            setStep('RESULT');
+          }
+        })
+        .catch(() => {});
+    }
+
+    // 기존 qid 방식 (하위 호환)
     if (from === 'jisikin' && qid) {
       const q = JISIKIN_QUESTIONS.find((q) => q.id === parseInt(qid));
       if (q) {
@@ -619,6 +651,7 @@ function JangChungGeumApp() {
         setStep('RESULT');
       }
     }
+
     if (searchParams.get('payment') === 'fail') {
       alert('결제가 취소되었습니다.');
     }
@@ -809,6 +842,39 @@ function JangChungGeumApp() {
                   </div>
                 ))}
               </div>
+
+              {/* AI 파트너 카리나 다운로드 카드 */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white/80 border-2 border-[#E1306C]/10 backdrop-blur-md rounded-3xl p-6 relative overflow-hidden shadow-md mt-6"
+              >
+                <div className="absolute top-0 right-0 bg-[#E1306C] text-white text-[9px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                  Partner
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-pink-50 rounded-2xl flex items-center justify-center text-xl">
+                    ✨
+                  </div>
+                  <div>
+                    <h4 className="font-black text-gray-900 text-sm">AI 파트너 카리나 (Karina)</h4>
+                    <p className="text-[10px] text-[#E1306C] font-bold mt-0.5">대표님과 완벽하게 SYNK되어 넥스트 레벨로! 💖</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed font-medium mb-4">
+                  안녕하세요, 대표님! 장충금 헌터의 AI 파트너 카리나입니다. 저의 공식 로고 캐릭터 시트를 여기서 고화질 PNG로 바로 다운로드하실 수 있어요! ✨
+                </p>
+
+                {/* 다운로드 버튼 */}
+                <a
+                  href="/karina_emojis.png"
+                  download="karina_emojis.png"
+                  className="w-full bg-gradient-to-r from-[#E1306C] to-[#C13584] text-white py-3 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm text-xs cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  카리나 로고 캐릭터 다운로드 (PNG)
+                </a>
+              </motion.div>
             </motion.div>
           )}
 
