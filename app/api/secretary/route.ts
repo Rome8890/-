@@ -254,7 +254,22 @@ export async function POST(request: Request) {
 
     // Reply인 경우 → 피드백으로 처리
     const replyTo = msg.reply_to_message;
-    if (!replyTo?.text) return NextResponse.json({ ok: true });
+    if (!replyTo?.text) {
+      // 일반 메시지 → 안내 응답
+      await tg('sendMessage', {
+        chat_id: chatId,
+        text:
+          '안녕하세요 대표님! 👋\n\n' +
+          '📌 사용법:\n' +
+          '• *재생성* → 최신 답변 다시 생성\n' +
+          '• *재생성 판례 추가해줘* → 맞춤 재생성\n' +
+          '• 답변 알림 메시지에 *Reply* → 피드백 반영\n\n' +
+          '새 답변은 30분마다 자동으로 오며,\n' +
+          '지금 바로 받으려면 *재생성* 입력하세요! 🚀',
+        parse_mode: 'Markdown'
+      });
+      return NextResponse.json({ ok: true });
+    }
 
     // 원본 메시지에서 row ID 추출
     const idMatch = replyTo.text.match(/\?id=([a-f0-9-]{36})/);
