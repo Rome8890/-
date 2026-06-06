@@ -45,10 +45,11 @@ async function fetchLawContext(query: string): Promise<string> {
 const SERVICE_BASE_URL = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
 
 // ── 질문 유형 분류 → qid ────────────────────────────
+// qid=1: 집주인 거부형 (임차인, 집주인이 반환 거부)
+// qid=2: 이사 준비형 (임차인, 이사 예정/전세보증금 포함)
 function classifyQid(title: string, body: string): number {
   const text = title + ' ' + body;
-  if (['전세보증금', '보증금 반환', '임차권등기', '소송', '지급명령'].some(k => text.includes(k))) return 3;
-  if (['안 준다', '안줘', '거부', '못 받', '못받', '안돌려', '버티'].some(k => text.includes(k))) return 1;
+  if (['안 준다', '안줘', '거부', '못 받', '못받', '안돌려', '버티', '안 돌려'].some(k => text.includes(k))) return 1;
   return 2;
 }
 
