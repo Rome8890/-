@@ -147,8 +147,8 @@ async function sendDraft(chatId: number, questionTitle: string, questionUrl: str
 }
 
 // ── GitHub Actions workflow_dispatch 트리거 ───────────
-async function triggerNaverPost(rowId: string): Promise<boolean> {
-  if (!GH_PAT) { console.error('[triggerNaverPost] GH_PAT 없음'); return false; }
+async function triggerNaverPost(rowId: string): Promise<{ok: boolean; status: number; detail: string}> {
+  if (!GH_PAT) return {ok: false, status: 0, detail: 'GH_PAT 환경변수 없음'};
   try {
     const res = await fetch(
       `https://api.github.com/repos/${GH_REPO}/actions/workflows/naver-post.yml/dispatches`,
@@ -163,9 +163,10 @@ async function triggerNaverPost(rowId: string): Promise<boolean> {
       }
     );
     const body = await res.text();
-    console.log(`[triggerNaverPost] status=${res.status} body=${body.slice(0, 200)}`);
-    return res.status === 204;
-  } catch (e) { console.error('[triggerNaverPost] 예외:', e); return false; }
+    return {ok: res.status === 204, status: res.status, detail: body.slice(0, 300)};
+  } catch (e) {
+    return {ok: false, status: -1, detail: String(e)};
+  }
 }
 
 // ── 주간 요약 전송 ────────────────────────────────────
@@ -251,12 +252,11 @@ export async function POST(request: Request) {
 
         await tg('sendMessage', { chat_id: chatId, text: `🚀 지식인 자동 등록 중...\n📌 ${row.question_title}\n\n약 2~3분 소요됩니다.` });
 
-        const ok = await triggerNaverPost(rowId);
-        if (!ok) {
-          // GitHub Actions 트리거 실패 시 직접 링크 제공
+        const result = await triggerNaverPost(rowId);
+        if (!result.ok) {
           await tg('sendMessage', {
             chat_id: chatId,
-            text: `⚠️ 자동 등록 트리거 실패\n\n수동 등록 링크:\n${row.question_url}`
+            text: `⚠️ 자동 등록 트리거 실패\nHTTP ${result.status}: ${result.detail}\n\n수동 등록 링크:\n${row.question_url}`
           });
         }
       }
