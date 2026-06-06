@@ -256,10 +256,19 @@ const JISIKIN_QUESTIONS = [
   },
 ];
 
+// ── 태그 → qid 매핑 ─────────────────────────────────────────
+function tagToQid(tag: string): number {
+  if (tag.includes('전세') || tag.includes('보증금')) return 3;
+  if (tag.includes('거부')) return 1;
+  return 2;
+}
+
 // ── 문서 타입별 내용증명 정보 ─────────────────────────────────
 
-function getDocInfo(id: number) {
-  if (id <= 2) return {
+function getDocInfo(id: number, tag?: string) {
+  // 동적 답변(id=0)은 태그로 판단
+  const effectiveId = id === 0 && tag ? tagToQid(tag) : id;
+  if (effectiveId <= 2) return {
     title: '장기수선충당금\n반환 청구서',
     subtitle: '우체국 내용증명 직접 발송 가능',
     items: [
@@ -269,7 +278,7 @@ function getDocInfo(id: number) {
       { icon: '📮', label: '7일 이내 반환 요구 조항', sub: '미이행 시 법적 조치 예고문 포함' },
     ],
   };
-  if (id === 3) return {
+  if (effectiveId === 3) return {
     title: '임차인 권리 보호\n내용증명서',
     subtitle: '경매 진행 중 비대면 법적 대응 문서',
     items: [
@@ -350,7 +359,8 @@ function ResultView({
       tc === 'orange' ? 'text-orange-500' :
         tc === 'purple' ? 'text-purple-500' :
           'text-blue-500';
-  const doc = getDocInfo(question.id);
+  const doc = getDocInfo(question.id, question.tag);
+  const isDynamic = question.id === 0;
 
   return (
     <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
@@ -441,6 +451,21 @@ function ResultView({
           </div>
         ))}
       </div>
+
+      {/* 동적 답변 전문 표시 (지식인 유입 시) */}
+      {isDynamic && question.answer && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+            <FileText className="w-3.5 h-3.5 text-gray-400" />
+            <p className="text-xs font-black text-gray-500 uppercase tracking-widest">AI 생성 답변 전문</p>
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-sm text-gray-700 font-medium leading-relaxed whitespace-pre-line">
+              {question.answer}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 신뢰 배지 바 */}
       <div className="flex items-center justify-between bg-white/60 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/30">
@@ -557,6 +582,24 @@ function ResultView({
           >
             <Download className="w-5 h-5" />
             내용증명 PDF 지금 받기 — 2,900원
+          </button>
+
+          {/* 무료 미리보기 */}
+          <button
+            onClick={() => {
+              import('@/lib/pdf').then(({ generateKoreanPDF }) => {
+                generateKoreanPDF({
+                  apartmentName: '해당 아파트',
+                  months: 24, monthlyAmount: 20000, refundAmount: 480000,
+                  userName: '세입자', userAddress: '', landlordName: '', landlordAddress: '',
+                  contractStart: '', contractEnd: '',
+                });
+              });
+            }}
+            className="w-full border border-white/20 text-white/60 font-bold py-3 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all text-sm"
+          >
+            <FileText className="w-4 h-4" />
+            내용증명서 무료 미리보기
           </button>
 
           <div className="flex items-center justify-center gap-3 text-[10px] text-white/30 font-medium">

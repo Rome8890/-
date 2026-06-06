@@ -42,13 +42,24 @@ async function fetchLawContext(query: string): Promise<string> {
   } catch { return ''; }
 }
 
-const SERVICE_LINK = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app/?from=jisikin&qid=2';
+const SERVICE_BASE_URL = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
+
+// ── 질문 유형 분류 → qid ────────────────────────────
+function classifyQid(title: string, body: string): number {
+  const text = title + ' ' + body;
+  if (['전세보증금', '보증금 반환', '임차권등기', '소송', '지급명령'].some(k => text.includes(k))) return 3;
+  if (['안 준다', '안줘', '거부', '못 받', '못받', '안돌려', '버티'].some(k => text.includes(k))) return 1;
+  return 2;
+}
 
 // ── Gemini: 답변 + 서비스 컨텐츠 동시 생성 ──────────
 async function generateFull(
   questionTitle: string, questionBody: string,
-  feedback: string, prevAnswer: string, lawContext: string
+  feedback: string, prevAnswer: string, lawContext: string,
+  serviceQid?: number
 ): Promise<{ answer: string; tag: string; verdict: string; legalSummary: object[]; actionSteps: object[] } | null> {
+  const qid = serviceQid ?? classifyQid(questionTitle, questionBody);
+  const SERVICE_LINK = `${SERVICE_BASE_URL}/?from=jisikin&qid=${qid}`;
 
   const isRegen = !!feedback || !!prevAnswer;
   const regenSection = isRegen ? `
@@ -238,11 +249,10 @@ export async function POST(request: Request) {
       if (action === 'copy') {
         const { data: row } = await supabase.from('jisikin_answers').select('answer_text,question_title').eq('id', rowId).single();
         if (!row) return NextResponse.json({ ok: true });
-        // 전체 답변 텍스트를 그대로 전송 (복사 후 지식인에 붙여넣기)
+        // 순수 텍스트만 전송 — 텔레그램에서 길게 눌러 전체 선택 후 복사
         await tg('sendMessage', {
           chat_id: chatId,
-          text: `📋 *답변 복사용 텍스트*\n(아래 내용을 길게 눌러 복사하세요)\n\n━━━━━━━━━━━━━━━━━\n${row.answer_text}\n━━━━━━━━━━━━━━━━━`,
-          parse_mode: 'Markdown'
+          text: row.answer_text
         });
       }
 
@@ -267,7 +277,8 @@ export async function POST(request: Request) {
 
         await tg('sendMessage', { chat_id: chatId, text: '🔄 재생성 중...' });
         const lawCtx = await fetchLawContext('공동주택관리법 제30조 장기수선충당금 임차인 반환');
-        const result = await generateFull(row.question_title, row.question_body || '', '', row.answer_text, lawCtx);
+        const qid = classifyQid(row.question_title, row.question_body || '');
+        const result = await generateFull(row.question_title, row.question_body || '', '', row.answer_text, lawCtx, qid);
         if (!result) return NextResponse.json({ ok: true });
 
         const newVersion = (row.version || 1) + 1;
@@ -344,9 +355,10 @@ export async function POST(request: Request) {
       }
 
       const lawCtx = await fetchLawContext(row.question_title + ' ' + (row.question_body || ''));
+      const qidRegen = classifyQid(row.question_title, row.question_body || '');
       const result = await generateFull(
         row.question_title, row.question_body || '',
-        feedback, row.answer_text, lawCtx
+        feedback, row.answer_text, lawCtx, qidRegen
       );
       if (!result) {
         await tg('sendMessage', { chat_id: chatId, text: '❌ 재생성 실패. 잠시 후 다시 시도해주세요.' });
@@ -399,7 +411,8 @@ export async function POST(request: Request) {
     await tg('sendMessage', { chat_id: chatId, text: `✏️ 피드백 반영 중...\n"${userText.slice(0, 50)}"` });
 
     const lawCtx = await fetchLawContext('공동주택관리법 제30조 장기수선충당금 임차인 반환');
-    const result = await generateFull(row.question_title, row.question_body || '', userText, row.answer_text, lawCtx);
+    const qidFeedback = classifyQid(row.question_title, row.question_body || '');
+    const result = await generateFull(row.question_title, row.question_body || '', userText, row.answer_text, lawCtx, qidFeedback);
     if (!result) {
       await tg('sendMessage', { chat_id: chatId, text: '❌ 재생성 실패. 다시 시도해주세요.' });
       return NextResponse.json({ ok: true });
