@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const BOT_TOKEN   = process.env.SECRETARY_BOT_TOKEN!;
-const GEMINI_KEY  = process.env.GEMINI_API_KEY!;
+const BOT_TOKEN    = process.env.SECRETARY_BOT_TOKEN!;
+const GEMINI_KEY   = process.env.GEMINI_API_KEY!;
 const GEMINI_MODEL = 'gemini-2.5-flash';
-const LAW_OC      = process.env.LAW_OC || 'law8899';
-const SB_URL      = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SB_KEY      = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const LAW_OC       = process.env.LAW_OC || 'law8899';
+const SB_URL       = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SB_KEY       = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE_BASE = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
+const GH_PAT       = process.env.GH_PAT || '';
+const GH_REPO      = 'Rome8890/jangchoonggeum-hunter';
 
 const supabase = createClient(SB_URL, SB_KEY);
 
@@ -128,14 +130,88 @@ async function sendDraft(chatId: number, questionTitle: string, questionUrl: str
   const preview = answer.length > 700 ? answer.slice(0, 700) + '...' : answer;
   await tg('sendMessage', {
     chat_id: chatId,
-    text: `📝 [답변 v${version} 준비완료]\n\n📌 ${questionTitle}\n🔗 ${questionUrl}\n\n${preview}\n\n🌐 서비스 링크: ${serviceUrl}\n\n✏️ 수정하려면 이 메시지에 Reply로 요청하세요`,
+    text: `📝 [답변 v${version} 준비완료]\n\n📌 ${questionTitle}\n🔗 ${questionUrl}\n\n${preview}\n\n🌐 서비스: ${serviceUrl}\n\n✏️ 수정하려면 이 메시지에 Reply로 요청하세요`,
     reply_markup: {
-      inline_keyboard: [[
-        { text: '✅ 네이버 등록완료', callback_data: `approve:${rowId}` },
-        { text: '🔄 재생성', callback_data: `regen:${rowId}` },
-      ]]
+      inline_keyboard: [
+        [
+          { text: '📋 답변 복사',  callback_data: `copy:${rowId}` },
+          { text: '🔄 재생성',     callback_data: `regen:${rowId}` },
+        ],
+        [
+          { text: '🚀 지식인 자동 등록', callback_data: `post:${rowId}` },
+          { text: '✅ 등록완료 확인',    callback_data: `approve:${rowId}` },
+        ]
+      ]
     }
   });
+}
+
+// ── GitHub Actions workflow_dispatch 트리거 ───────────
+async function triggerNaverPost(rowId: string): Promise<boolean> {
+  if (!GH_PAT) return false;
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_REPO}/actions/workflows/naver-post.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${GH_PAT}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ref: 'main', inputs: { row_id: rowId } })
+      }
+    );
+    return res.status === 204;
+  } catch { return false; }
+}
+
+// ── 주간 요약 전송 ────────────────────────────────────
+async function sendWeeklySummary(chatId: number, days = 7) {
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const { data: rows } = await supabase
+    .from('jisikin_answers')
+    .select('id,question_title,question_url,answer_text,status,version,created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: true })
+    .limit(20);
+
+  if (!rows || rows.length === 0) {
+    await tg('sendMessage', { chat_id: chatId, text: `📊 지난 ${days}일간 생성된 답변이 없습니다.` });
+    return;
+  }
+
+  const posted = rows.filter(r => r.status === 'posted').length;
+  await tg('sendMessage', {
+    chat_id: chatId,
+    text: `📊 *지난 ${days}일 장충금 답변 요약*\n\n총 ${rows.length}개 | ✅ 등록완료 ${posted}개 | 📝 대기중 ${rows.length - posted}개\n\n버튼 사용법:\n📋 복사 → 전체 텍스트 전송\n🚀 자동 등록 → 지식인에 바로 등록`,
+    parse_mode: 'Markdown'
+  });
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const status = row.status === 'posted' ? '✅ 등록완료' : '📝 대기중';
+    const answer = row.answer_text || '';
+    const preview = answer.length > 500 ? answer.slice(0, 500) + '...' : answer;
+    const created = (row.created_at || '').slice(0, 10);
+
+    await tg('sendMessage', {
+      chat_id: chatId,
+      text: `[${i + 1}/${rows.length}] ${status} | ${created}\n\n📌 ${row.question_title}\n🔗 ${row.question_url}\n\n📝 답변:\n${preview}\n\n🌐 ${SERVICE_BASE}/?id=${row.id}`,
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '📋 답변 복사',  callback_data: `copy:${row.id}` },
+            { text: '🔄 재생성',     callback_data: `regen:${row.id}` },
+          ],
+          [
+            { text: '🚀 지식인 자동 등록', callback_data: `post:${row.id}` },
+            { text: '✅ 등록완료 확인',    callback_data: `approve:${row.id}` },
+          ]
+        ]
+      }
+    });
+  }
 }
 
 // ── 메인 웹훅 핸들러 ────────────────────────────────
@@ -154,6 +230,33 @@ export async function POST(request: Request) {
       if (action === 'approve') {
         await supabase.from('jisikin_answers').update({ status: 'posted' }).eq('id', rowId);
         await tg('sendMessage', { chat_id: chatId, text: '✅ 등록 완료로 기록했습니다! 수고하셨습니다 💖' });
+      }
+
+      if (action === 'copy') {
+        const { data: row } = await supabase.from('jisikin_answers').select('answer_text,question_title').eq('id', rowId).single();
+        if (!row) return NextResponse.json({ ok: true });
+        // 전체 답변 텍스트를 그대로 전송 (복사 후 지식인에 붙여넣기)
+        await tg('sendMessage', {
+          chat_id: chatId,
+          text: `📋 *답변 복사용 텍스트*\n(아래 내용을 길게 눌러 복사하세요)\n\n━━━━━━━━━━━━━━━━━\n${row.answer_text}\n━━━━━━━━━━━━━━━━━`,
+          parse_mode: 'Markdown'
+        });
+      }
+
+      if (action === 'post') {
+        const { data: row } = await supabase.from('jisikin_answers').select('question_title,question_url').eq('id', rowId).single();
+        if (!row) return NextResponse.json({ ok: true });
+
+        await tg('sendMessage', { chat_id: chatId, text: `🚀 지식인 자동 등록 중...\n📌 ${row.question_title}\n\n약 2~3분 소요됩니다.` });
+
+        const ok = await triggerNaverPost(rowId);
+        if (!ok) {
+          // GitHub Actions 트리거 실패 시 직접 링크 제공
+          await tg('sendMessage', {
+            chat_id: chatId,
+            text: `⚠️ 자동 등록 트리거 실패\n\n수동 등록 링크:\n${row.question_url}`
+          });
+        }
       }
 
       if (action === 'regen') {
@@ -199,6 +302,14 @@ export async function POST(request: Request) {
           '• "재생성 강경하게" → 강한 어조\n\n' +
           '✏️ 답변 메시지에 Reply → 피드백 반영'
       });
+      return NextResponse.json({ ok: true });
+    }
+
+    // ── /weekly, 주간요약 ──
+    if (userText === '/weekly' || userText === '주간요약' || userText.startsWith('/weekly ')) {
+      const days = userText.startsWith('/weekly ') ? parseInt(userText.slice(8).trim()) || 7 : 7;
+      await tg('sendMessage', { chat_id: chatId, text: `📊 지난 ${days}일 요약을 불러오는 중...` });
+      await sendWeeklySummary(chatId, days);
       return NextResponse.json({ ok: true });
     }
 
