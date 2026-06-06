@@ -148,7 +148,7 @@ async function sendDraft(chatId: number, questionTitle: string, questionUrl: str
 
 // ── GitHub Actions workflow_dispatch 트리거 ───────────
 async function triggerNaverPost(rowId: string): Promise<boolean> {
-  if (!GH_PAT) return false;
+  if (!GH_PAT) { console.error('[triggerNaverPost] GH_PAT 없음'); return false; }
   try {
     const res = await fetch(
       `https://api.github.com/repos/${GH_REPO}/actions/workflows/naver-post.yml/dispatches`,
@@ -162,8 +162,10 @@ async function triggerNaverPost(rowId: string): Promise<boolean> {
         body: JSON.stringify({ ref: 'main', inputs: { row_id: rowId } })
       }
     );
+    const body = await res.text();
+    console.log(`[triggerNaverPost] status=${res.status} body=${body.slice(0, 200)}`);
     return res.status === 204;
-  } catch { return false; }
+  } catch (e) { console.error('[triggerNaverPost] 예외:', e); return false; }
 }
 
 // ── 주간 요약 전송 ────────────────────────────────────
