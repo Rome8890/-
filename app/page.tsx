@@ -614,9 +614,520 @@ function ResultView({
   );
 }
 
+// ── Stitch 랜딩 페이지 컴포넌트 ──────────────────────────────
+
+function StitchLanding({ onUploadClick }: { onUploadClick: () => void }) {
+  return (
+    <div className="min-h-screen antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
+      {/* Header */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-5 md:px-10 h-16 w-full"
+        style={{ backgroundColor: '#f8f9fa', borderBottom: '1px solid #e1e3e4' }}
+      >
+        <div className="w-10" />
+        <h1 className="font-bold" style={{ fontSize: '22px', letterSpacing: '-0.01em', color: '#0001bb' }}>
+          Boro Refund
+        </h1>
+        <div className="w-10" />
+      </header>
+
+      {/* Main */}
+      <main className="pt-24 pb-32 px-5 md:px-10 mx-auto" style={{ maxWidth: '1200px' }}>
+
+        {/* Hero Section */}
+        <section className="mb-8">
+          <h2
+            className="font-bold mb-4"
+            style={{ fontSize: 'clamp(30px, 5vw, 48px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#191c1d' }}
+          >
+            이사 가시나요?<br />
+            집주인이 안 알려준 내 돈,<br />
+            3초 만에 찾아가세요.
+          </h2>
+          <p style={{ fontSize: '18px', lineHeight: 1.6, color: '#454558' }}>
+            아파트, 오피스텔 세입자라면 평균 60만 원의 &apos;장기수선충당금&apos;을 돌려받아야 합니다.
+          </p>
+        </section>
+
+        {/* Upload Action Box */}
+        <section className="mx-auto mb-12" style={{ maxWidth: '640px' }}>
+          <div
+            onClick={onUploadClick}
+            className="flex flex-col items-center justify-center text-center cursor-pointer p-8 transition-all duration-300"
+            style={{ background: '#F0F0FF', border: '2px dashed #0000FF', borderRadius: '16px' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#e0e0ff')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#F0F0FF')}
+          >
+            <div className="flex gap-4 mb-4">
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: '48px', color: '#0001bb', fontVariationSettings: "'FILL' 1" }}
+              >
+                photo_camera
+              </span>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: '48px', color: '#0001bb', fontVariationSettings: "'FILL' 1" }}
+              >
+                description
+              </span>
+            </div>
+            <h3 className="font-semibold mb-2" style={{ fontSize: '20px', color: '#0001bb' }}>
+              📸 월 관리비 영수증 / 임대차 계약서 업로드 (클릭)
+            </h3>
+            <p style={{ fontSize: '15px', color: '#0001bb', opacity: 0.8 }}>
+              AI가 3초 안에 환급금을 계산합니다.
+            </p>
+          </div>
+        </section>
+
+        {/* Social Proof */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Testimonial */}
+          <div
+            className="bg-white p-6"
+            style={{ borderRadius: '16px', border: '1px solid #e1e3e4', boxShadow: '0px 4px 20px rgba(0,0,255,0.05)' }}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: '#e0e0ff' }}
+              >
+                <span className="material-symbols-outlined" style={{ color: '#0001bb' }}>person</span>
+              </div>
+              <div>
+                <p className="italic" style={{ fontSize: '15px', lineHeight: 1.6, color: '#191c1d' }}>
+                  "이사 당일 집주인이 안 준다고 해서 곤란했는데, 1시간 만에 입금받았습니다."
+                </p>
+                <p className="mt-2" style={{ fontSize: '12px', color: '#454558' }}>
+                  - 대구 수성구 거주자
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Partners */}
+          <div
+            className="bg-white p-6 flex flex-col items-center justify-center"
+            style={{ borderRadius: '16px', border: '1px solid #e1e3e4', boxShadow: '0px 4px 20px rgba(0,0,255,0.05)' }}
+          >
+            <p
+              className="mb-4 uppercase"
+              style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.1em', color: '#454558' }}
+            >
+              Trusted By
+            </p>
+            <div className="flex gap-8 items-center" style={{ opacity: 0.7 }}>
+              <span className="font-bold" style={{ fontSize: '18px', color: '#191c1d' }}>K-법률사무소</span>
+              <div className="w-px h-8" style={{ background: '#e1e3e4' }} />
+              <span className="font-bold" style={{ fontSize: '18px', color: '#191c1d' }}>Global Expat</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-3 gap-4 mt-8">
+          {[
+            { val: '평균 53만원', label: '세입자 환급액' },
+            { val: '95%+', label: '법적 승소율' },
+            { val: '즉시', label: '효력 발생' },
+          ].map(({ val, label }) => (
+            <div
+              key={label}
+              className="flex flex-col items-center p-4"
+              style={{ background: '#f0f0ff', borderRadius: '16px', textAlign: 'center' }}
+            >
+              <p className="font-bold" style={{ fontSize: '18px', color: '#0001bb' }}>{val}</p>
+              <p style={{ fontSize: '12px', color: '#454558', marginTop: '4px' }}>{label}</p>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ── Stitch 금액 계산기 ──────────────────────────────────────────
+
+function StitchCalculator({
+  onResult,
+  onBack,
+}: {
+  onResult: (data: { months: number; monthly: number; total: number }) => void;
+  onBack: () => void;
+}) {
+  const [months, setMonths] = useState('');
+  const [monthly, setMonthly] = useState('');
+
+  const monthsNum = parseInt(months) || 0;
+  const monthlyNum = parseInt(monthly.replace(/,/g, '')) || 0;
+  const total = monthsNum * monthlyNum;
+  const isValid = monthsNum > 0 && monthlyNum > 0;
+
+  const fmtNum = (val: string) =>
+    val.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return (
+    <div className="min-h-screen antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
+      <header
+        className="flex items-center gap-4 px-5 md:px-10 h-16 w-full"
+        style={{ backgroundColor: '#f8f9fa', borderBottom: '1px solid #e1e3e4' }}
+      >
+        <button
+          onClick={onBack}
+          className="p-2 rounded-full transition-opacity hover:opacity-70"
+          style={{ color: '#0001bb' }}
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 className="font-bold" style={{ fontSize: '22px', letterSpacing: '-0.01em', color: '#0001bb' }}>
+          Boro Refund
+        </h1>
+      </header>
+
+      <main className="px-5 md:px-10 pt-10 pb-24 mx-auto" style={{ maxWidth: '640px' }}>
+        <div className="mb-8">
+          <h2
+            className="font-bold mb-3"
+            style={{ fontSize: 'clamp(26px, 5vw, 40px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#191c1d' }}
+          >
+            내 장충금<br />얼마나 받을 수 있을까요?
+          </h2>
+          <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#454558' }}>
+            관리비 고지서에서 <strong>장기수선충당금</strong> 항목을 찾아 입력해 주세요.
+          </p>
+        </div>
+
+        <div
+          className="p-6 mb-6"
+          style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e1e3e4', boxShadow: '0 4px 20px rgba(0,0,255,0.05)' }}
+        >
+          <div className="space-y-5">
+            <div>
+              <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
+                거주 기간
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={months}
+                  onChange={e => setMonths(e.target.value.replace(/\D/g, ''))}
+                  placeholder="예: 24"
+                  style={{
+                    width: '100%', padding: '14px 56px 14px 16px', fontSize: '16px',
+                    border: '1.5px solid #c5c4db', borderRadius: '12px',
+                    outline: 'none', color: '#191c1d', background: '#fafafa', fontWeight: 600,
+                  }}
+                  onFocus={e => (e.target.style.borderColor = '#0001bb')}
+                  onBlur={e => (e.target.style.borderColor = '#c5c4db')}
+                />
+                <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#757589', fontWeight: 600 }}>
+                  개월
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
+                월 납부액 (관리비 고지서 확인)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={monthly}
+                  onChange={e => setMonthly(fmtNum(e.target.value))}
+                  placeholder="예: 23,000"
+                  style={{
+                    width: '100%', padding: '14px 40px 14px 16px', fontSize: '16px',
+                    border: '1.5px solid #c5c4db', borderRadius: '12px',
+                    outline: 'none', color: '#191c1d', background: '#fafafa', fontWeight: 600,
+                  }}
+                  onFocus={e => (e.target.style.borderColor = '#0001bb')}
+                  onBlur={e => (e.target.style.borderColor = '#c5c4db')}
+                />
+                <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#757589', fontWeight: 600 }}>
+                  원
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: '#757589', marginTop: '6px' }}>
+                관리비 고지서 → &apos;장기수선충당금&apos; 항목 금액
+              </p>
+            </div>
+          </div>
+
+          {/* 실시간 결과 */}
+          <div
+            className="mt-6 p-5 text-center"
+            style={{
+              background: isValid ? '#f0f0ff' : '#f8f9fa',
+              borderRadius: '12px',
+              transition: 'background 0.3s',
+            }}
+          >
+            <p style={{ fontSize: '13px', color: '#757589', marginBottom: '8px' }}>총 환급 예상액</p>
+            <p
+              className="font-bold"
+              style={{
+                fontSize: '36px', letterSpacing: '-0.02em',
+                color: isValid ? '#0000ff' : '#c5c4db',
+                transition: 'color 0.3s',
+              }}
+            >
+              {total > 0 ? `${total.toLocaleString('ko-KR')}원` : '---'}
+            </p>
+            {isValid && (
+              <p style={{ fontSize: '13px', color: '#454558', marginTop: '6px' }}>
+                {monthsNum}개월 × {monthlyNum.toLocaleString('ko-KR')}원
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* 도움말 */}
+        <div
+          className="flex items-start gap-3 p-4 mb-6"
+          style={{ background: '#fff8e1', borderRadius: '12px', border: '1px solid #ffe082' }}
+        >
+          <span style={{ fontSize: '20px', flexShrink: 0 }}>💡</span>
+          <div>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#6d4c00', marginBottom: '4px' }}>
+              고지서 어디서 찾나요?
+            </p>
+            <p style={{ fontSize: '13px', color: '#8d6e00', lineHeight: 1.5 }}>
+              관리사무소 방문 또는 아파트 앱에서 최근 1개월 고지서를 확인하세요. &apos;장기수선충당금&apos; 항목이 별도 표시됩니다.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => isValid && onResult({ months: monthsNum, monthly: monthlyNum, total })}
+          disabled={!isValid}
+          className="w-full flex items-center justify-center gap-2 py-4 px-6 font-semibold transition-all active:scale-95"
+          style={{
+            background: isValid ? '#0000ff' : '#c5c4db',
+            color: '#ffffff',
+            borderRadius: '9999px',
+            fontSize: '16px',
+            boxShadow: isValid ? '0 8px 16px rgba(0,0,255,0.2)' : 'none',
+            cursor: isValid ? 'pointer' : 'not-allowed',
+          }}
+        >
+          <span className="material-symbols-outlined">calculate</span>
+          환급금 확인하기
+        </button>
+      </main>
+    </div>
+  );
+}
+
+// ── Stitch 분석 완료 결과 페이지 (Route A) ──────────────────────
+
+function StitchResultA({
+  refundTotal,
+  monthly,
+  months,
+  onGoCheckout,
+  onBack,
+}: {
+  refundTotal: number;
+  monthly: number;
+  months: number;
+  onGoCheckout: () => void;
+  onBack: () => void;
+}) {
+  const fee = Math.round(refundTotal * 0.051);
+  const instant = refundTotal - fee;
+  const [copyDone, setCopyDone] = useState(false);
+
+  const shareMessage =
+    `안녕하세요, 집주인님.\n\n장기수선충당금 반환을 요청드립니다.\n■ 거주기간: ${months}개월\n■ 월 납부액: ${monthly.toLocaleString('ko-KR')}원\n■ 총 반환 금액: ${refundTotal.toLocaleString('ko-KR')}원\n\n공동주택관리법 제30조 제2항에 따라 임차인이 대신 납부한 장기수선충당금은 임대차 종료 시 반환하여야 합니다.\n\n7일 이내 반환 요청드립니다. 감사합니다.`;
+
+  const handleShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try { await navigator.share({ text: shareMessage }); } catch {}
+    } else {
+      navigator.clipboard.writeText(shareMessage).then(() => {
+        setCopyDone(true);
+        setTimeout(() => setCopyDone(false), 2500);
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
+      {/* Header */}
+      <header
+        className="flex items-center gap-4 px-5 md:px-10 h-16 w-full"
+        style={{ backgroundColor: '#f8f9fa', borderBottom: '1px solid #e1e3e4' }}
+      >
+        <button
+          onClick={onBack}
+          className="p-2 rounded-full transition-opacity hover:opacity-70"
+          style={{ color: '#0001bb' }}
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 className="font-bold" style={{ fontSize: '22px', letterSpacing: '-0.01em', color: '#0001bb' }}>
+          Boro Refund
+        </h1>
+      </header>
+
+      {/* Confetti BG */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='c' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='10' cy='10' r='2' fill='%2300C853' opacity='0.15'/%3E%3Crect x='30' y='40' width='4' height='4' fill='%230000FF' opacity='0.1' transform='rotate(45 32 42)'/%3E%3Cpolygon points='80,20 85,30 75,30' fill='%23ffab06' opacity='0.12'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23c)'/%3E%3C/svg%3E")`,
+          zIndex: 0,
+        }}
+      />
+
+      <main
+        className="flex-grow w-full px-5 md:px-10 py-8 pb-24 relative"
+        style={{ maxWidth: '672px', margin: '0 auto', zIndex: 1 }}
+      >
+        {/* Headline */}
+        <div className="text-center mb-6">
+          <div
+            className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-5 mx-auto"
+            style={{ background: '#5cfd80' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#00732c', fontVariationSettings: "'FILL' 1" }}>
+              check_circle
+            </span>
+          </div>
+          <h2 className="font-bold mb-3" style={{ fontSize: 'clamp(28px, 5vw, 44px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#0000ff' }}>
+            🎉 분석 완료!<br />
+            총 {refundTotal.toLocaleString('ko-KR')}원을<br />
+            돌려받을 수 있습니다.
+          </h2>
+          <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#454558' }}>
+            집주인과 싸우지 마세요. 저희가 권리를 양도받고 오늘 당장{' '}
+            <strong style={{ color: '#0001bb', fontWeight: 700 }}>{instant.toLocaleString('ko-KR')}원</strong>
+            (수수료 제외)을 송금해 드립니다.
+          </p>
+        </div>
+
+        {/* Breakdown Card */}
+        <div
+          className="p-6 mb-6"
+          style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e1e3e4',
+            borderLeft: '4px solid #00C853',
+            boxShadow: '0px 4px 20px rgba(0,0,255,0.05)',
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined" style={{ color: '#00C853' }}>receipt_long</span>
+            <h3 className="font-semibold uppercase" style={{ fontSize: '13px', letterSpacing: '0.05em', color: '#191c1d' }}>
+              예상 환급금 산출 내역
+            </h3>
+          </div>
+
+          {[
+            { label: '월 납부액 (장기수선충당금)', value: `${monthly.toLocaleString('ko-KR')} 원` },
+            { label: '거주 기간', value: `${months} 개월` },
+            { label: '총 환급 가능 금액', value: `${refundTotal.toLocaleString('ko-KR')} 원` },
+            { label: '법률 처리 수수료 (5.1%)', value: `- ${fee.toLocaleString('ko-KR')} 원`, isNeg: true },
+          ].map(({ label, value, isNeg }) => (
+            <div
+              key={label}
+              className="flex justify-between items-center py-3"
+              style={{ borderBottom: '1px solid #e7e8e9' }}
+            >
+              <span style={{ fontSize: '15px', color: '#757589' }}>{label}</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: isNeg ? '#ba1a1a' : '#191c1d' }}>{value}</span>
+            </div>
+          ))}
+
+          <div
+            className="flex justify-between items-center mt-3 p-4"
+            style={{ background: '#f8f9fa', borderRadius: '12px' }}
+          >
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#191c1d' }}>최종 즉시 입금액</span>
+            <span className="font-bold" style={{ fontSize: '24px', color: '#0001bb', letterSpacing: '-0.01em' }}>
+              {instant.toLocaleString('ko-KR')} 원
+            </span>
+          </div>
+        </div>
+
+        {/* ── 집주인 공유 버튼 ── */}
+        <div
+          className="p-5 mb-4"
+          style={{ background: '#fff8e1', borderRadius: '16px', border: '1px solid #ffe082' }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined" style={{ color: '#f59e0b', fontVariationSettings: "'FILL' 1" }}>share</span>
+            <h3 className="font-semibold" style={{ fontSize: '15px', color: '#78350f' }}>
+              집주인에게 직접 청구하기
+            </h3>
+          </div>
+          <p style={{ fontSize: '13px', color: '#92400e', lineHeight: 1.6, marginBottom: '12px' }}>
+            아래 버튼을 누르면 법적 근거가 포함된 청구 메시지를 카카오톡/문자로 바로 보낼 수 있습니다.
+          </p>
+          <button
+            onClick={handleShare}
+            className="w-full flex items-center justify-center gap-2 py-3 font-semibold transition-all active:scale-95"
+            style={{
+              background: copyDone ? '#00C853' : '#f59e0b',
+              color: '#ffffff',
+              borderRadius: '9999px',
+              fontSize: '15px',
+              boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              {copyDone ? 'check_circle' : 'send'}
+            </span>
+            {copyDone ? '복사 완료! 카카오톡/문자에 붙여넣기 하세요' : '📲 집주인에게 청구 메시지 보내기'}
+          </button>
+        </div>
+
+        {/* ── 결제 CTA ── */}
+        <div className="flex flex-col gap-3 mb-4">
+          <button
+            onClick={onGoCheckout}
+            className="w-full flex items-center justify-center gap-2 py-4 px-6 font-semibold transition-all active:scale-95"
+            style={{
+              background: '#0000ff',
+              color: '#ffffff',
+              borderRadius: '9999px',
+              fontSize: '16px',
+              boxShadow: '0 8px 16px rgba(0,0,255,0.2)',
+            }}
+          >
+            <span className="material-symbols-outlined">account_balance</span>
+            내 계좌로 즉시 입금 받기 — 권리 양도
+          </button>
+
+          <button
+            onClick={onGoCheckout}
+            className="w-full flex items-center justify-center gap-2 py-4 px-6 font-semibold transition-all active:scale-95"
+            style={{
+              background: '#ffffff',
+              color: '#0000ff',
+              border: '1.5px solid #0000ff',
+              borderRadius: '9999px',
+              fontSize: '16px',
+            }}
+          >
+            <span className="material-symbols-outlined">description</span>
+            내용증명 PDF 받기 — 2,900원
+          </button>
+        </div>
+
+        <p className="text-center" style={{ fontSize: '12px', color: '#757589', lineHeight: 1.6 }}>
+          * 즉시 입금은 보로(Boro)가 반환채권을 양도받아 집주인에게 직접 청구하며, 분쟁 없이 즉시 정산됩니다.
+        </p>
+      </main>
+    </div>
+  );
+}
+
 // ── 앱 타입 ───────────────────────────────────────────────────
 
-type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT' | 'CHECKOUT';
+type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT' | 'CHECKOUT' | 'RESULT_A' | 'CALCULATOR';
 
 interface UserInfo {
   apartmentName: string;
@@ -649,6 +1160,7 @@ function JangChungGeumApp() {
     contractEnd: '',
   });
   const [isPaying, setIsPaying] = useState(false);
+  const [refundData, setRefundData] = useState<{ months: number; monthly: number; total: number } | null>(null);
   const { track } = useTracker();
 
   // 지식인 링크로 유입 → 바로 RESULT
@@ -740,7 +1252,7 @@ function JangChungGeumApp() {
     setStep('SENT');
   };
 
-  // 계산기 없이 바로 결제 (CHECKOUT 스텝용)
+  // 계산기 없이 바로 결제 (CHECKOUT 스텝용) — 서버에서 orderId 생성
   const handlePaymentDirect = async () => {
     if (!selectedQuestion) return;
     setIsPaying(true);
@@ -766,13 +1278,22 @@ function JangChungGeumApp() {
     }));
 
     try {
+      // 1. 서버에서 orderId + amount 발급 (클라이언트 위조 방지)
+      const orderRes = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: 'content_cert', customerName: userInfo.userName || '세입자' }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.ok) throw new Error(orderData.error);
+
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
       const payment = tossPayments.payment({ customerKey: ANONYMOUS });
       await payment.requestPayment({
         method: 'CARD',
-        amount: { currency: 'KRW', value: 2900 },
-        orderId: `jcg_${Date.now()}`,
-        orderName: '장충금 헌터 내용증명 PDF',
+        amount: { currency: 'KRW', value: orderData.amount },
+        orderId: orderData.orderId,
+        orderName: orderData.orderName,
         customerName: userInfo.userName || '세입자',
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/?payment=fail`,
@@ -781,7 +1302,6 @@ function JangChungGeumApp() {
       console.error('Payment error:', e);
       setIsPaying(false);
       const msg = e?.message || '';
-      // 사용자가 결제창을 닫은 경우는 무시
       if (!msg.includes('취소') && !msg.includes('cancel') && !msg.includes('CANCEL')) {
         alert(`결제 오류가 발생했습니다.\n\n${msg || '잠시 후 다시 시도해 주세요.'}`);
       }
@@ -805,13 +1325,21 @@ function JangChungGeumApp() {
     }));
 
     try {
+      const orderRes = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: 'content_cert', customerName: userInfo.userName || '세입자' }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.ok) throw new Error(orderData.error);
+
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
       const payment = tossPayments.payment({ customerKey: ANONYMOUS });
       await payment.requestPayment({
         method: 'CARD',
-        amount: { currency: 'KRW', value: 2900 },
-        orderId: `jcg_${Date.now()}`,
-        orderName: '장충금 헌터 내용증명 PDF',
+        amount: { currency: 'KRW', value: orderData.amount },
+        orderId: orderData.orderId,
+        orderName: orderData.orderName,
         customerName: userInfo.userName || '세입자',
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/?payment=fail`,
@@ -823,6 +1351,44 @@ function JangChungGeumApp() {
   };
 
   const formatNumber = (val: string) => val.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  // 지식인 유입 여부 (파라미터 있으면 RESULT로 직행 → Stitch 랜딩 스킵)
+  const isJisikinInbound = !!searchParams.get('from') || !!searchParams.get('id');
+  const isAdminMode = searchParams.get('mode') === 'admin';
+
+  // Stitch 공개 랜딩 (직접 방문자)
+  if (step === 'HOME' && !isJisikinInbound && !isAdminMode) {
+    return <StitchLanding onUploadClick={() => setStep('CALCULATOR')} />;
+  }
+
+  // 금액 계산기
+  if (step === 'CALCULATOR') {
+    return (
+      <StitchCalculator
+        onResult={(data) => { setRefundData(data); setStep('RESULT_A'); }}
+        onBack={() => setStep('HOME')}
+      />
+    );
+  }
+
+  // Stitch 분석 결과 페이지 (Route A)
+  if (step === 'RESULT_A') {
+    const rd = refundData ?? { months: 24, monthly: 23000, total: 552000 };
+    return (
+      <StitchResultA
+        refundTotal={rd.total}
+        monthly={rd.monthly}
+        months={rd.months}
+        onGoCheckout={() => {
+          if (refundData) {
+            sessionStorage.setItem('jcg_refund_data', JSON.stringify(refundData));
+          }
+          window.location.href = '/checkout';
+        }}
+        onBack={() => setStep('CALCULATOR')}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F0F4F8] text-[#1D1D1F] overflow-hidden selection:bg-[#00A3FF] selection:text-white">
