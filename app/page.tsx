@@ -747,17 +747,18 @@ function StitchLanding({ onUploadClick }: { onUploadClick: () => void }) {
   );
 }
 
-// ── Stitch 금액 계산기 ──────────────────────────────────────────
+// ── Stitch 금액 계산기 (= 홈 첫 화면) ──────────────────────────
 
 function StitchCalculator({
   onResult,
-  onBack,
+  showHero = false,
 }: {
   onResult: (data: { months: number; monthly: number; total: number }) => void;
-  onBack: () => void;
+  showHero?: boolean;
 }) {
   const [months, setMonths] = useState('');
   const [monthly, setMonthly] = useState('');
+  const [showExample, setShowExample] = useState(false);
 
   const monthsNum = parseInt(months) || 0;
   const monthlyNum = parseInt(monthly.replace(/,/g, '')) || 0;
@@ -769,40 +770,100 @@ function StitchCalculator({
 
   return (
     <div className="min-h-screen antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
+      {/* Header */}
       <header
-        className="flex items-center gap-4 px-5 md:px-10 h-16 w-full"
+        className="flex items-center justify-center px-5 md:px-10 h-16 w-full"
         style={{ backgroundColor: '#f8f9fa', borderBottom: '1px solid #e1e3e4' }}
       >
-        <button
-          onClick={onBack}
-          className="p-2 rounded-full transition-opacity hover:opacity-70"
-          style={{ color: '#0001bb' }}
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
         <h1 className="font-bold" style={{ fontSize: '22px', letterSpacing: '-0.01em', color: '#0001bb' }}>
           Boro Refund
         </h1>
       </header>
 
-      <main className="px-5 md:px-10 pt-10 pb-24 mx-auto" style={{ maxWidth: '640px' }}>
-        <div className="mb-8">
+      {/* Hero (홈 첫 방문시) */}
+      {showHero && (
+        <section className="px-5 md:px-10 pt-8 pb-4 mx-auto" style={{ maxWidth: '640px' }}>
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 mb-4"
+            style={{ background: '#e0e0ff', borderRadius: '99px' }}
+          >
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0001bb' }}>
+              🏠 아파트·오피스텔 세입자 전용
+            </span>
+          </div>
           <h2
             className="font-bold mb-3"
             style={{ fontSize: 'clamp(26px, 5vw, 40px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#191c1d' }}
           >
-            내 장충금<br />얼마나 받을 수 있을까요?
+            집주인이 안 알려준<br />내 장충금,<br />지금 찾아가세요.
           </h2>
-          <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#454558' }}>
-            관리비 고지서에서 <strong>장기수선충당금</strong> 항목을 찾아 입력해 주세요.
+          <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#454558', marginBottom: '8px' }}>
+            관리비 고지서 속 <strong>장기수선충당금</strong>은 세입자 돈입니다.<br />
+            평균 <strong style={{ color: '#0001bb' }}>53만원</strong> — 법적으로 100% 돌려받을 수 있습니다.
           </p>
-        </div>
+        </section>
+      )}
 
+      {/* 3단계 진행 가이드 */}
+      <div className="px-5 md:px-10 pt-5 pb-3 mx-auto" style={{ maxWidth: '640px' }}>
+        <div className="flex items-center">
+          {[
+            { n: 1, label: '고지서 확인' },
+            { n: 2, label: '금액 입력' },
+            { n: 3, label: '내용증명 신청' },
+          ].map(({ n, label }, i) => (
+            <React.Fragment key={n}>
+              <div className="flex flex-col items-center" style={{ flex: 1 }}>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1"
+                  style={{
+                    background: n <= 2 ? '#0001bb' : '#e1e3e4',
+                    color: n <= 2 ? '#fff' : '#757589',
+                    fontSize: '13px',
+                  }}
+                >
+                  {n}
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: n <= 2 ? 700 : 400, color: n <= 2 ? '#0001bb' : '#757589' }}>
+                  {label}
+                </span>
+              </div>
+              {i < 2 && (
+                <div style={{ flex: 2, height: '2px', background: i === 0 ? '#bec2ff' : '#e1e3e4', marginBottom: '20px' }} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      <main className="px-5 md:px-10 pt-3 pb-24 mx-auto" style={{ maxWidth: '640px' }}>
+
+        {/* 고지서 예시 버튼 */}
+        <button
+          onClick={() => setShowExample(true)}
+          className="w-full flex items-center justify-center gap-2 py-4 mb-5 transition-all active:scale-95"
+          style={{
+            background: '#f0f0ff',
+            border: '2px dashed #bec2ff',
+            borderRadius: '14px',
+            color: '#0001bb',
+            fontSize: '15px',
+            fontWeight: 600,
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>description</span>
+          📄 관리비 고지서 / 임대차 계약서 예시 보기
+        </button>
+
+        {/* 입력 폼 */}
         <div
-          className="p-6 mb-6"
+          className="p-6 mb-5"
           style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e1e3e4', boxShadow: '0 4px 20px rgba(0,0,255,0.05)' }}
         >
-          <div className="space-y-5">
+          <p className="font-semibold mb-4" style={{ fontSize: '15px', color: '#191c1d' }}>
+            직접 입력해 주세요
+          </p>
+          <div className="space-y-4">
             <div>
               <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
                 거주 기간
@@ -829,7 +890,10 @@ function StitchCalculator({
 
             <div>
               <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
-                월 납부액 (관리비 고지서 확인)
+                월 납부액
+                <span style={{ fontSize: '12px', fontWeight: 400, color: '#757589', marginLeft: '6px' }}>
+                  (관리비 고지서 → 장기수선충당금 항목)
+                </span>
               </label>
               <div className="relative">
                 <input
@@ -849,29 +913,18 @@ function StitchCalculator({
                   원
                 </span>
               </div>
-              <p style={{ fontSize: '12px', color: '#757589', marginTop: '6px' }}>
-                관리비 고지서 → &apos;장기수선충당금&apos; 항목 금액
-              </p>
             </div>
           </div>
 
           {/* 실시간 결과 */}
           <div
-            className="mt-6 p-5 text-center"
-            style={{
-              background: isValid ? '#f0f0ff' : '#f8f9fa',
-              borderRadius: '12px',
-              transition: 'background 0.3s',
-            }}
+            className="mt-5 p-5 text-center"
+            style={{ background: isValid ? '#f0f0ff' : '#f8f9fa', borderRadius: '12px', transition: 'background 0.3s' }}
           >
             <p style={{ fontSize: '13px', color: '#757589', marginBottom: '8px' }}>총 환급 예상액</p>
             <p
               className="font-bold"
-              style={{
-                fontSize: '36px', letterSpacing: '-0.02em',
-                color: isValid ? '#0000ff' : '#c5c4db',
-                transition: 'color 0.3s',
-              }}
+              style={{ fontSize: '36px', letterSpacing: '-0.02em', color: isValid ? '#0000ff' : '#c5c4db', transition: 'color 0.3s' }}
             >
               {total > 0 ? `${total.toLocaleString('ko-KR')}원` : '---'}
             </p>
@@ -880,22 +933,6 @@ function StitchCalculator({
                 {monthsNum}개월 × {monthlyNum.toLocaleString('ko-KR')}원
               </p>
             )}
-          </div>
-        </div>
-
-        {/* 도움말 */}
-        <div
-          className="flex items-start gap-3 p-4 mb-6"
-          style={{ background: '#fff8e1', borderRadius: '12px', border: '1px solid #ffe082' }}
-        >
-          <span style={{ fontSize: '20px', flexShrink: 0 }}>💡</span>
-          <div>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#6d4c00', marginBottom: '4px' }}>
-              고지서 어디서 찾나요?
-            </p>
-            <p style={{ fontSize: '13px', color: '#8d6e00', lineHeight: 1.5 }}>
-              관리사무소 방문 또는 아파트 앱에서 최근 1개월 고지서를 확인하세요. &apos;장기수선충당금&apos; 항목이 별도 표시됩니다.
-            </p>
           </div>
         </div>
 
@@ -913,9 +950,107 @@ function StitchCalculator({
           }}
         >
           <span className="material-symbols-outlined">calculate</span>
-          환급금 확인하기
+          내 환급금 확인하기
         </button>
+
+        {/* 신뢰 지표 */}
+        <div className="grid grid-cols-3 gap-3 mt-5">
+          {[
+            { val: '53만원', label: '평균 환급액' },
+            { val: '95%+', label: '법적 승소율' },
+            { val: '공동주택법', label: '제30조 보장' },
+          ].map(({ val, label }) => (
+            <div key={label} className="text-center p-3" style={{ background: '#f0f0ff', borderRadius: '12px' }}>
+              <p className="font-bold" style={{ fontSize: '15px', color: '#0001bb' }}>{val}</p>
+              <p style={{ fontSize: '11px', color: '#454558', marginTop: '2px' }}>{label}</p>
+            </div>
+          ))}
+        </div>
       </main>
+
+      {/* ── 예시 모달 ── */}
+      {showExample && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.55)' }}
+          onClick={() => setShowExample(false)}
+        >
+          <div
+            className="w-full overflow-y-auto"
+            style={{ maxWidth: '520px', maxHeight: '90vh', background: '#fff', borderRadius: '20px', padding: '24px' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-bold" style={{ fontSize: '18px', color: '#191c1d' }}>관리비 고지서 예시</h3>
+              <button onClick={() => setShowExample(false)} style={{ color: '#757589' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* 모의 관리비 고지서 */}
+            <div style={{ border: '1px solid #e1e3e4', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
+              <div style={{ background: '#191c1d', color: '#fff', padding: '10px 16px', fontSize: '13px', fontWeight: 700 }}>
+                📋 관리비 고지서 — 2024년 1월 (예시)
+              </div>
+              {[
+                { item: '일반관리비', amount: '45,000', hl: false },
+                { item: '청소비', amount: '8,000', hl: false },
+                { item: '경비비', amount: '12,000', hl: false },
+                { item: '소독비', amount: '2,000', hl: false },
+                { item: '승강기유지비', amount: '3,500', hl: false },
+                { item: '장기수선충당금', amount: '23,000', hl: true },
+                { item: '수선유지비', amount: '5,000', hl: false },
+              ].map(({ item, amount, hl }) => (
+                <div
+                  key={item}
+                  className="flex justify-between items-center px-4 py-2.5"
+                  style={{
+                    background: hl ? '#fff3cd' : '#fff',
+                    borderBottom: '1px solid #f0f0f0',
+                    fontSize: '14px',
+                  }}
+                >
+                  <span style={{ color: hl ? '#78350f' : '#454558', fontWeight: hl ? 700 : 400 }}>
+                    {hl ? '👉 ' : ''}{item}
+                  </span>
+                  <span style={{ color: hl ? '#92400e' : '#191c1d', fontWeight: 600 }}>{amount}원</span>
+                </div>
+              ))}
+              <div className="flex justify-between px-4 py-3" style={{ background: '#f8f9fa', fontWeight: 700, fontSize: '14px' }}>
+                <span>합계</span><span>98,500원</span>
+              </div>
+            </div>
+
+            {/* 찾는 방법 */}
+            <div style={{ background: '#fff8e1', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: '#78350f', marginBottom: '8px' }}>💡 장기수선충당금 찾는 법</p>
+              <ol style={{ fontSize: '13px', color: '#92400e', lineHeight: 1.8, paddingLeft: '16px', margin: 0 }}>
+                <li>아파트 관리비 고지서에서 <strong>장기수선충당금</strong> 항목 찾기</li>
+                <li>금액을 위 <strong>월 납부액</strong>에 입력</li>
+                <li>고지서 없으면 → 관리사무소에 문의 (무료 발급 가능)</li>
+              </ol>
+            </div>
+
+            {/* 임대차 계약서 안내 */}
+            <div style={{ background: '#f0f0ff', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: '#0001bb', marginBottom: '8px' }}>📝 임대차 계약서로 거주기간 확인</p>
+              <p style={{ fontSize: '13px', color: '#454558', lineHeight: 1.7 }}>
+                계약서의 <strong>계약 시작일 ~ 종료일</strong>이 거주 기간입니다.<br />
+                예: 2022.03.01 ~ 2024.02.28 → <strong>24개월</strong>
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowExample(false)}
+              className="w-full py-3.5 font-semibold"
+              style={{ background: '#0000ff', color: '#fff', borderRadius: '9999px', fontSize: '15px' }}
+            >
+              확인했어요, 입력하러 가기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1356,17 +1491,12 @@ function JangChungGeumApp() {
   const isJisikinInbound = !!searchParams.get('from') || !!searchParams.get('id');
   const isAdminMode = searchParams.get('mode') === 'admin';
 
-  // Stitch 공개 랜딩 (직접 방문자)
+  // 첫 화면 = 계산기 (직접 방문자)
   if (step === 'HOME' && !isJisikinInbound && !isAdminMode) {
-    return <StitchLanding onUploadClick={() => setStep('CALCULATOR')} />;
-  }
-
-  // 금액 계산기
-  if (step === 'CALCULATOR') {
     return (
       <StitchCalculator
+        showHero
         onResult={(data) => { setRefundData(data); setStep('RESULT_A'); }}
-        onBack={() => setStep('HOME')}
       />
     );
   }
