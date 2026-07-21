@@ -5,10 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Download, ArrowRight } from 'lucide-react';
 import { generateKoreanPDF, type PDFData } from '@/lib/pdf';
+import { useLanguage } from '@/lib/i18n/context';
 
 type Status = 'verifying' | 'success' | 'error';
 
 function SuccessContent() {
+  const { tx } = useLanguage();
+  const ts = tx.success;
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>('verifying');
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -83,7 +86,7 @@ function SuccessContent() {
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
           className="w-14 h-14 rounded-full border-4 border-[#00A3FF]/20 border-t-[#00A3FF]"
         />
-        <p className="font-black text-xl text-gray-700">결제 확인 중...</p>
+        <p className="font-black text-xl text-gray-700">{ts.verifying}</p>
       </div>
     );
   }
@@ -92,16 +95,15 @@ function SuccessContent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#F0F4F8] gap-4 px-6">
         <div className="text-5xl">😱</div>
-        <h2 className="text-2xl font-black">결제 확인 실패</h2>
-        <p className="text-gray-500 text-sm font-medium text-center">
-          결제는 완료됐으나 확인 중 오류가 발생했습니다.<br />
-          고객센터로 문의해 주세요.
+        <h2 className="text-2xl font-black">{ts.errorTitle}</h2>
+        <p className="text-gray-500 text-sm font-medium text-center" style={{ whiteSpace: 'pre-line' }}>
+          {ts.errorDesc}
         </p>
         <button
           onClick={() => window.location.href = '/'}
           className="mt-4 bg-gray-900 text-white font-black px-6 py-3 rounded-2xl"
         >
-          홈으로 돌아가기
+          {ts.goHome}
         </button>
       </div>
     );
@@ -119,19 +121,18 @@ function SuccessContent() {
           <div className="w-20 h-20 bg-green-100 rounded-full mx-auto flex items-center justify-center">
             <CheckCircle2 className="w-10 h-10 text-green-500" />
           </div>
-          <h1 className="text-3xl font-black">결제 완료!</h1>
-          <p className="text-gray-500 font-medium text-sm">
-            {paymentMethod}으로 4,900원 결제가 완료되었습니다.<br />
-            내용증명 PDF를 지금 바로 다운로드하세요.
+          <h1 className="text-3xl font-black">{ts.title}</h1>
+          <p className="text-gray-500 font-medium text-sm" style={{ whiteSpace: 'pre-line' }}>
+            {ts.desc(paymentMethod)}
           </p>
           {userData && (
             <div className="bg-blue-50 rounded-2xl p-4 text-left space-y-1">
-              <p className="text-xs font-black text-blue-700">청구 내역</p>
+              <p className="text-xs font-black text-blue-700">{ts.claimTitle}</p>
               <p className="font-black text-[#00A3FF] text-xl">
-                {userData.refundAmount.toLocaleString('ko-KR')}원 환급 청구
+                {ts.claimLabel(userData.refundAmount.toLocaleString('ko-KR') + '원')}
               </p>
               <p className="text-xs text-gray-500 font-medium">
-                {userData.apartmentName} · {userData.months}개월 거주
+                {ts.claimSub(userData.apartmentName, userData.months)}
               </p>
             </div>
           )}
@@ -144,19 +145,15 @@ function SuccessContent() {
         >
           <span className="flex items-center gap-2">
             <Download className="w-5 h-5" />
-            내용증명 PDF 다운로드
+            {ts.downloadBtn}
           </span>
-          <span className="text-[11px] font-medium opacity-80">새 탭에서 열립니다 → 인쇄 버튼 클릭</span>
+          <span className="text-[11px] font-medium opacity-80">{ts.downloadHint}</span>
         </button>
 
         {/* 안내 */}
         <div className="bg-white/70 rounded-3xl p-5 space-y-3 border border-white/20">
-          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">다음 단계</p>
-          {[
-            '관리사무소에서 장기수선충당금 납부확인서 발급',
-            'PDF 출력 후 집주인에게 내용증명 우편 발송',
-            '7일 내 미반환 시 소액심판 청구 (수수료 1만원)',
-          ].map((step, i) => (
+          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">{ts.nextTitle}</p>
+          {ts.nextSteps.map((step, i) => (
             <div key={i} className="flex items-start gap-3">
               <span className="w-5 h-5 bg-[#00A3FF] text-white text-[10px] font-black rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 {i + 1}
@@ -170,7 +167,7 @@ function SuccessContent() {
           onClick={() => window.location.href = '/'}
           className="w-full flex items-center justify-center gap-2 text-gray-400 font-bold text-sm py-3"
         >
-          홈으로 <ArrowRight className="w-4 h-4" />
+          {ts.homeBtn} <ArrowRight className="w-4 h-4" />
         </button>
       </motion.div>
     </div>

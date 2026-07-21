@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { PHProvider } from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -68,7 +69,9 @@ export default function RootLayout({
           `}
         </Script>
         
-        {children}
+        <PHProvider>
+          {children}
+        </PHProvider>
         <Analytics />
         <SpeedInsights />
       </body>

@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useTracker } from '@/hooks/useTracker';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
+import { useLanguage } from '@/lib/i18n/context';
+import { LangToggle } from '@/components/LangToggle';
 
 // ── 데이터 ────────────────────────────────────────────────────
 
@@ -756,6 +758,8 @@ function StitchCalculator({
   onResult: (data: { months: number; monthly: number; total: number }) => void;
   showHero?: boolean;
 }) {
+  const { lang, tx } = useLanguage();
+  const tc = tx.calc;
   const [months, setMonths] = useState('');
   const [monthly, setMonthly] = useState('');
   const [showExample, setShowExample] = useState(false);
@@ -772,12 +776,14 @@ function StitchCalculator({
     <div className="min-h-screen antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
       {/* Header */}
       <header
-        className="flex items-center justify-center px-5 md:px-10 h-16 w-full"
+        className="flex items-center justify-between px-5 md:px-10 h-16 w-full"
         style={{ backgroundColor: '#f8f9fa', borderBottom: '1px solid #e1e3e4' }}
       >
+        <div style={{ width: '80px' }} />
         <h1 className="font-bold" style={{ fontSize: '22px', letterSpacing: '-0.01em', color: '#0001bb' }}>
-          Boro Refund
+          {tx.brand}
         </h1>
+        <LangToggle />
       </header>
 
       {/* Hero (홈 첫 방문시) */}
@@ -788,18 +794,21 @@ function StitchCalculator({
             style={{ background: '#e0e0ff', borderRadius: '99px' }}
           >
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#0001bb' }}>
-              🏠 아파트·오피스텔 세입자 전용
+              {lang === 'ko' ? '🏠 아파트·오피스텔 세입자 전용' : '🏠 For Apartment & Officetel Tenants in Korea'}
             </span>
           </div>
           <h2
             className="font-bold mb-3"
-            style={{ fontSize: 'clamp(26px, 5vw, 40px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#191c1d' }}
+            style={{ fontSize: 'clamp(26px, 5vw, 40px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#191c1d', whiteSpace: 'pre-line' }}
           >
-            집주인이 안 알려준<br />내 장충금,<br />지금 찾아가세요.
+            {lang === 'ko' ? '집주인이 안 알려준\n내 장충금,\n지금 찾아가세요.' : 'Money You Never\nGot Back When\nYou Moved Out.'}
           </h2>
           <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#454558', marginBottom: '8px' }}>
-            관리비 고지서 속 <strong>장기수선충당금</strong>은 세입자 돈입니다.<br />
-            평균 <strong style={{ color: '#0001bb' }}>53만원</strong> — 법적으로 100% 돌려받을 수 있습니다.
+            {lang === 'ko' ? (
+              <>관리비 고지서 속 <strong>장기수선충당금</strong>은 세입자 돈입니다.<br />평균 <strong style={{ color: '#0001bb' }}>53만원</strong> — 법적으로 100% 돌려받을 수 있습니다.</>
+            ) : (
+              <>Korea&apos;s <strong>Long-term Repair Fund</strong> is money tenants pay but landlords keep.<br />Average refund: <strong style={{ color: '#0001bb' }}>₩530,000</strong> — legally yours to claim back.</>
+            )}
           </p>
         </section>
       )}
@@ -807,11 +816,7 @@ function StitchCalculator({
       {/* 3단계 진행 가이드 */}
       <div className="px-5 md:px-10 pt-5 pb-3 mx-auto" style={{ maxWidth: '640px' }}>
         <div className="flex items-center">
-          {[
-            { n: 1, label: '고지서 확인' },
-            { n: 2, label: '금액 입력' },
-            { n: 3, label: '내용증명 신청' },
-          ].map(({ n, label }, i) => (
+          {tc.steps.map((label, i) => ({ n: i + 1, label })).map(({ n, label }, i) => (
             <React.Fragment key={n}>
               <div className="flex flex-col items-center" style={{ flex: 1 }}>
                 <div
@@ -852,7 +857,7 @@ function StitchCalculator({
           }}
         >
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>description</span>
-          📄 관리비 고지서 / 임대차 계약서 예시 보기
+          📄 {tc.exampleBtn}
         </button>
 
         {/* 입력 폼 */}
@@ -861,19 +866,19 @@ function StitchCalculator({
           style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e1e3e4', boxShadow: '0 4px 20px rgba(0,0,255,0.05)' }}
         >
           <p className="font-semibold mb-4" style={{ fontSize: '15px', color: '#191c1d' }}>
-            직접 입력해 주세요
+            {lang === 'ko' ? '직접 입력해 주세요' : 'Enter your details'}
           </p>
           <div className="space-y-4">
             <div>
               <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
-                거주 기간
+                {tc.monthsLabel}
               </label>
               <div className="relative">
                 <input
                   type="number"
                   value={months}
                   onChange={e => setMonths(e.target.value.replace(/\D/g, ''))}
-                  placeholder="예: 24"
+                  placeholder={tc.monthsPh}
                   style={{
                     width: '100%', padding: '14px 56px 14px 16px', fontSize: '16px',
                     border: '1.5px solid #c5c4db', borderRadius: '12px',
@@ -883,16 +888,16 @@ function StitchCalculator({
                   onBlur={e => (e.target.style.borderColor = '#c5c4db')}
                 />
                 <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#757589', fontWeight: 600 }}>
-                  개월
+                  {lang === 'ko' ? '개월' : 'mo'}
                 </span>
               </div>
             </div>
 
             <div>
               <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
-                월 납부액
+                {tc.monthlyLabel}
                 <span style={{ fontSize: '12px', fontWeight: 400, color: '#757589', marginLeft: '6px' }}>
-                  (관리비 고지서 → 장기수선충당금 항목)
+                  ({tc.monthlyTip})
                 </span>
               </label>
               <div className="relative">
@@ -900,7 +905,7 @@ function StitchCalculator({
                   type="text"
                   value={monthly}
                   onChange={e => setMonthly(fmtNum(e.target.value))}
-                  placeholder="예: 23,000"
+                  placeholder={tc.monthlyPh}
                   style={{
                     width: '100%', padding: '14px 40px 14px 16px', fontSize: '16px',
                     border: '1.5px solid #c5c4db', borderRadius: '12px',
@@ -910,7 +915,7 @@ function StitchCalculator({
                   onBlur={e => (e.target.style.borderColor = '#c5c4db')}
                 />
                 <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#757589', fontWeight: 600 }}>
-                  원
+                  {lang === 'ko' ? '원' : '₩'}
                 </span>
               </div>
             </div>
@@ -921,16 +926,18 @@ function StitchCalculator({
             className="mt-5 p-5 text-center"
             style={{ background: isValid ? '#f0f0ff' : '#f8f9fa', borderRadius: '12px', transition: 'background 0.3s' }}
           >
-            <p style={{ fontSize: '13px', color: '#757589', marginBottom: '8px' }}>총 환급 예상액</p>
+            <p style={{ fontSize: '13px', color: '#757589', marginBottom: '8px' }}>{tc.totalLabel}</p>
             <p
               className="font-bold"
               style={{ fontSize: '36px', letterSpacing: '-0.02em', color: isValid ? '#0000ff' : '#c5c4db', transition: 'color 0.3s' }}
             >
-              {total > 0 ? `${total.toLocaleString('ko-KR')}원` : '---'}
+              {total > 0 ? (lang === 'ko' ? `${total.toLocaleString('ko-KR')}원` : `₩${total.toLocaleString()}`) : '---'}
             </p>
             {isValid && (
               <p style={{ fontSize: '13px', color: '#454558', marginTop: '6px' }}>
-                {monthsNum}개월 × {monthlyNum.toLocaleString('ko-KR')}원
+                {lang === 'ko'
+                  ? `${monthsNum}개월 × ${monthlyNum.toLocaleString('ko-KR')}원`
+                  : `${monthsNum} months × ₩${monthlyNum.toLocaleString()}`}
               </p>
             )}
           </div>
@@ -950,16 +957,12 @@ function StitchCalculator({
           }}
         >
           <span className="material-symbols-outlined">calculate</span>
-          내 환급금 확인하기
+          {tc.submitBtn}
         </button>
 
         {/* 신뢰 지표 */}
         <div className="grid grid-cols-3 gap-3 mt-5">
-          {[
-            { val: '53만원', label: '평균 환급액' },
-            { val: '95%+', label: '법적 승소율' },
-            { val: '공동주택법', label: '제30조 보장' },
-          ].map(({ val, label }) => (
+          {tc.trust.map(({ val, label }) => (
             <div key={label} className="text-center p-3" style={{ background: '#f0f0ff', borderRadius: '12px' }}>
               <p className="font-bold" style={{ fontSize: '15px', color: '#0001bb' }}>{val}</p>
               <p style={{ fontSize: '11px', color: '#454558', marginTop: '2px' }}>{label}</p>
@@ -969,9 +972,8 @@ function StitchCalculator({
 
         {/* Footer */}
         <div style={{ borderTop: '1px solid #e1e3e4', marginTop: '32px', paddingTop: '16px', textAlign: 'center' }}>
-          <p style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.8, margin: 0 }}>
-            Boro Refund (장충금 헌터) · info@bororefund.com<br />
-            공동주택관리법 제30조 제2항 근거 · 세입자 장기수선충당금 반환 청구 서비스
+          <p style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.8, margin: 0, whiteSpace: 'pre-line' }}>
+            {tc.footer}
           </p>
         </div>
       </main>
@@ -990,7 +992,7 @@ function StitchCalculator({
           >
             {/* 모달 헤더 */}
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-bold" style={{ fontSize: '18px', color: '#191c1d' }}>관리비 고지서 예시</h3>
+              <h3 className="font-bold" style={{ fontSize: '18px', color: '#191c1d' }}>{tc.modalTitle}</h3>
               <button onClick={() => setShowExample(false)} style={{ color: '#757589' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -999,7 +1001,7 @@ function StitchCalculator({
             {/* 모의 관리비 고지서 */}
             <div style={{ border: '1px solid #e1e3e4', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
               <div style={{ background: '#191c1d', color: '#fff', padding: '10px 16px', fontSize: '13px', fontWeight: 700 }}>
-                📋 관리비 고지서 — 2024년 1월 (예시)
+                {lang === 'ko' ? '📋 관리비 고지서 — 2024년 1월 (예시)' : '📋 Maintenance Bill — Jan 2024 (Example)'}
               </div>
               {[
                 { item: '일반관리비', amount: '45,000', hl: false },
@@ -1026,26 +1028,23 @@ function StitchCalculator({
                 </div>
               ))}
               <div className="flex justify-between px-4 py-3" style={{ background: '#f8f9fa', fontWeight: 700, fontSize: '14px' }}>
-                <span>합계</span><span>98,500원</span>
+                <span>{lang === 'ko' ? '합계' : 'Total'}</span><span>{lang === 'ko' ? '98,500원' : '₩98,500'}</span>
               </div>
             </div>
 
             {/* 찾는 방법 */}
             <div style={{ background: '#fff8e1', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
-              <p style={{ fontSize: '14px', fontWeight: 700, color: '#78350f', marginBottom: '8px' }}>💡 장기수선충당금 찾는 법</p>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: '#78350f', marginBottom: '8px' }}>{tc.modalFindTitle}</p>
               <ol style={{ fontSize: '13px', color: '#92400e', lineHeight: 1.8, paddingLeft: '16px', margin: 0 }}>
-                <li>아파트 관리비 고지서에서 <strong>장기수선충당금</strong> 항목 찾기</li>
-                <li>금액을 위 <strong>월 납부액</strong>에 입력</li>
-                <li>고지서 없으면 → 관리사무소에 문의 (무료 발급 가능)</li>
+                {tc.modalFindSteps.map((step, i) => <li key={i}>{step}</li>)}
               </ol>
             </div>
 
             {/* 임대차 계약서 안내 */}
             <div style={{ background: '#f0f0ff', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
-              <p style={{ fontSize: '14px', fontWeight: 700, color: '#0001bb', marginBottom: '8px' }}>📝 임대차 계약서로 거주기간 확인</p>
-              <p style={{ fontSize: '13px', color: '#454558', lineHeight: 1.7 }}>
-                계약서의 <strong>계약 시작일 ~ 종료일</strong>이 거주 기간입니다.<br />
-                예: 2022.03.01 ~ 2024.02.28 → <strong>24개월</strong>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: '#0001bb', marginBottom: '8px' }}>{tc.modalContractTitle}</p>
+              <p style={{ fontSize: '13px', color: '#454558', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                {tc.modalContractDesc}
               </p>
             </div>
 
@@ -1054,7 +1053,7 @@ function StitchCalculator({
               className="w-full py-3.5 font-semibold"
               style={{ background: '#0000ff', color: '#fff', borderRadius: '9999px', fontSize: '15px' }}
             >
-              확인했어요, 입력하러 가기
+              {tc.modalConfirmBtn}
             </button>
           </div>
         </div>
@@ -1078,10 +1077,14 @@ function StitchResultA({
   onGoCheckout: () => void;
   onBack: () => void;
 }) {
+  const { lang, tx } = useLanguage();
+  const tr = tx.result;
   const fee = Math.round(refundTotal * 0.051);
   const instant = refundTotal - fee;
   const [copyDone, setCopyDone] = useState(false);
+  const fm = (n: number) => lang === 'ko' ? `${n.toLocaleString('ko-KR')}원` : `₩${n.toLocaleString()}`;
 
+  // 공유 메시지는 집주인(한국인)에게 보내는 것이므로 항상 한국어
   const shareMessage =
     `안녕하세요, 집주인님.\n\n장기수선충당금 반환을 요청드립니다.\n■ 거주기간: ${months}개월\n■ 월 납부액: ${monthly.toLocaleString('ko-KR')}원\n■ 총 반환 금액: ${refundTotal.toLocaleString('ko-KR')}원\n\n공동주택관리법 제30조 제2항에 따라 임차인이 대신 납부한 장기수선충당금은 임대차 종료 시 반환하여야 합니다.\n\n7일 이내 반환 요청드립니다. 감사합니다.`;
 
@@ -1113,9 +1116,10 @@ function StitchResultA({
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 className="font-bold" style={{ fontSize: '22px', letterSpacing: '-0.01em', color: '#0001bb' }}>
-          Boro Refund
+        <h1 className="font-bold flex-1" style={{ fontSize: '22px', letterSpacing: '-0.01em', color: '#0001bb' }}>
+          {tx.brand}
         </h1>
+        <LangToggle />
       </header>
 
       {/* Confetti BG */}
@@ -1141,67 +1145,18 @@ function StitchResultA({
               check_circle
             </span>
           </div>
-          <h2 className="font-bold mb-3" style={{ fontSize: 'clamp(28px, 5vw, 44px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#0000ff' }}>
-            🎉 분석 완료!<br />
-            총 {refundTotal.toLocaleString('ko-KR')}원을<br />
-            돌려받을 수 있습니다.
+          <h2 className="font-bold mb-3" style={{ fontSize: 'clamp(28px, 5vw, 44px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#0000ff', whiteSpace: 'pre-line' }}>
+            {tr.headline(refundTotal)}
           </h2>
           <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#454558' }}>
-            집주인과 싸우지 마세요. 저희가 권리를 양도받고 오늘 당장{' '}
-            <strong style={{ color: '#0001bb', fontWeight: 700 }}>{instant.toLocaleString('ko-KR')}원</strong>
-            (수수료 제외)을 송금해 드립니다.
+            {tr.sub(instant)}
           </p>
-        </div>
-
-        {/* Breakdown Card */}
-        <div
-          className="p-6 mb-6"
-          style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e1e3e4',
-            borderLeft: '4px solid #00C853',
-            boxShadow: '0px 4px 20px rgba(0,0,255,0.05)',
-          }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <span className="material-symbols-outlined" style={{ color: '#00C853' }}>receipt_long</span>
-            <h3 className="font-semibold uppercase" style={{ fontSize: '13px', letterSpacing: '0.05em', color: '#191c1d' }}>
-              예상 환급금 산출 내역
-            </h3>
-          </div>
-
-          {[
-            { label: '월 납부액 (장기수선충당금)', value: `${monthly.toLocaleString('ko-KR')} 원` },
-            { label: '거주 기간', value: `${months} 개월` },
-            { label: '총 환급 가능 금액', value: `${refundTotal.toLocaleString('ko-KR')} 원` },
-            { label: '법률 처리 수수료 (5.1%)', value: `- ${fee.toLocaleString('ko-KR')} 원`, isNeg: true },
-          ].map(({ label, value, isNeg }) => (
-            <div
-              key={label}
-              className="flex justify-between items-center py-3"
-              style={{ borderBottom: '1px solid #e7e8e9' }}
-            >
-              <span style={{ fontSize: '15px', color: '#757589' }}>{label}</span>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: isNeg ? '#ba1a1a' : '#191c1d' }}>{value}</span>
-            </div>
-          ))}
-
-          <div
-            className="flex justify-between items-center mt-3 p-4"
-            style={{ background: '#f8f9fa', borderRadius: '12px' }}
-          >
-            <span style={{ fontSize: '14px', fontWeight: 600, color: '#191c1d' }}>최종 즉시 입금액</span>
-            <span className="font-bold" style={{ fontSize: '24px', color: '#0001bb', letterSpacing: '-0.01em' }}>
-              {instant.toLocaleString('ko-KR')} 원
-            </span>
-          </div>
         </div>
 
         {/* ── Step 1: 집주인 공유 (무료·즉시) ── */}
         <div className="mb-5">
           <p className="font-bold mb-3 text-center" style={{ fontSize: '13px', color: '#454558', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-            STEP 1 — 먼저 집주인에게 직접 요청하세요 (무료)
+            {lang === 'ko' ? 'STEP 1 — 먼저 집주인에게 직접 요청하세요 (무료)' : 'STEP 1 — Ask Your Landlord Directly First (Free)'}
           </p>
           <button
             onClick={handleShare}
@@ -1219,13 +1174,16 @@ function StitchResultA({
             <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>
               {copyDone ? 'check_circle' : 'send'}
             </span>
-            {copyDone
-              ? '복사 완료! 카카오톡 / 문자에 붙여넣기 하세요'
-              : `📲 집주인에게 ${refundTotal.toLocaleString('ko-KR')}원 청구 메시지 보내기`}
+            {copyDone ? tr.shareCopied : tr.shareBtn(refundTotal)}
           </button>
           <p className="text-center mt-2" style={{ fontSize: '12px', color: '#757589' }}>
-            법적 근거 포함 메시지 자동 생성 · 카카오톡 / 문자 바로 전송
+            {tr.shareNote}
           </p>
+          {tr.shareNoteIntl && (
+            <p className="text-center mt-1" style={{ fontSize: '11px', color: '#c5c4db' }}>
+              {tr.shareNoteIntl}
+            </p>
+          )}
         </div>
 
         {/* ── 금액 내역 ── */}
@@ -1242,14 +1200,14 @@ function StitchResultA({
           <div className="flex items-center gap-2 mb-3">
             <span className="material-symbols-outlined" style={{ color: '#00C853', fontSize: '18px' }}>receipt_long</span>
             <h3 className="font-semibold uppercase" style={{ fontSize: '12px', letterSpacing: '0.05em', color: '#454558' }}>
-              예상 환급금 산출 내역
+              {tr.breakdownTitle}
             </h3>
           </div>
           {[
-            { label: '월 납부액', value: `${monthly.toLocaleString('ko-KR')}원` },
-            { label: '거주 기간', value: `${months}개월` },
-            { label: '총 환급 가능 금액', value: `${refundTotal.toLocaleString('ko-KR')}원` },
-            { label: '법률 처리 수수료 (9%)', value: `- ${Math.round(refundTotal * 0.09).toLocaleString('ko-KR')}원`, isNeg: true },
+            { label: tr.monthlyLbl, value: fm(monthly) },
+            { label: tr.periodLbl, value: lang === 'ko' ? `${months}개월` : `${months} months` },
+            { label: tr.totalLbl, value: fm(refundTotal) },
+            { label: tr.feeLbl, value: `- ${fm(Math.round(refundTotal * 0.09))}`, isNeg: true },
           ].map(({ label, value, isNeg }) => (
             <div key={label} className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0f0', fontSize: '14px' }}>
               <span style={{ color: '#757589' }}>{label}</span>
@@ -1257,9 +1215,9 @@ function StitchResultA({
             </div>
           ))}
           <div className="flex justify-between items-center mt-3 pt-2">
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#191c1d' }}>권리양도 시 즉시 수령액</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#191c1d' }}>{tr.instantLbl}</span>
             <span className="font-bold" style={{ fontSize: '22px', color: '#0001bb' }}>
-              {(refundTotal - Math.round(refundTotal * 0.09)).toLocaleString('ko-KR')}원
+              {fm(refundTotal - Math.round(refundTotal * 0.09))}
             </span>
           </div>
         </div>
@@ -1270,11 +1228,10 @@ function StitchResultA({
           style={{ background: '#f8f9fa', borderRadius: '16px', border: '1px solid #e1e3e4' }}
         >
           <p className="font-bold mb-3" style={{ fontSize: '13px', color: '#454558', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-            STEP 2 — 집주인이 거부했나요?
+            {lang === 'ko' ? 'STEP 2 —' : 'STEP 2 —'} {tr.step2Title}
           </p>
           <p style={{ fontSize: '13px', color: '#454558', lineHeight: 1.6, marginBottom: '14px' }}>
-            내용증명 PDF를 발송하면 <strong>법적 효력이 즉시 발생</strong>합니다.
-            집주인 거부 시 소액심판 승소율 95%+.
+            {tr.step2Sub}
           </p>
           <button
             onClick={onGoCheckout}
@@ -1288,19 +1245,18 @@ function StitchResultA({
             }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>description</span>
-            내용증명 PDF 받기 — 4,900원
+            {tr.pdfBtn}
           </button>
         </div>
 
         <p className="text-center" style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.6 }}>
-          결제 완료 즉시 PDF 다운로드 · 법무사 검수 완료 문서
+          {tr.pdfHint}
         </p>
 
         {/* Footer */}
         <div style={{ borderTop: '1px solid #e1e3e4', marginTop: '32px', paddingTop: '20px', textAlign: 'center' }}>
-          <p style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.8, margin: 0 }}>
-            Boro Refund (장충금 헌터) · 이메일: info@bororefund.com<br />
-            공동주택관리법 제30조 제2항에 근거한 합법적 반환 청구 서비스
+          <p style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.8, margin: 0, whiteSpace: 'pre-line' }}>
+            {tr.footer}
           </p>
         </div>
       </main>

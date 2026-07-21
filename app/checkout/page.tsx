@@ -4,21 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, FileText, CheckCircle2, CreditCard, Globe } from 'lucide-react';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { useLanguage } from '@/lib/i18n/context';
+import { LangToggle } from '@/components/LangToggle';
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eon';
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'sb';
 const PRODUCT_ID = 'content_cert';
 
-const TRUST_ITEMS = [
-  '법적 효력 있는 내용증명 PDF 즉시 발급',
-  '공동주택관리법 제30조 근거 조항 자동 포함',
-  '집주인 거부 시 소액심판 근거 자료 (승소율 95%+)',
-  '결제 후 즉시 다운로드',
-];
-
 type PaymentMode = 'toss' | 'paypal';
 
 export default function CheckoutPage() {
+  const { tx } = useLanguage();
+  const tc = tx.checkout;
   const [mode, setMode] = useState<PaymentMode>('toss');
   const [isPaying, setIsPaying] = useState(false);
   const [customerName, setCustomerName] = useState('');
@@ -92,9 +89,9 @@ export default function CheckoutPage() {
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <h1 className="font-bold" style={{ fontSize: '20px', letterSpacing: '-0.01em', color: '#0001bb' }}>
-          Boro Refund
+          {tx.brand}
         </h1>
-        <div className="w-10" />
+        <LangToggle />
       </header>
 
       <main className="px-5 md:px-10 pt-6 pb-24 mx-auto" style={{ maxWidth: '520px' }}>
@@ -107,10 +104,10 @@ export default function CheckoutPage() {
           <span style={{ fontSize: '20px', flexShrink: 0 }}>🔔</span>
           <div>
             <p style={{ fontSize: '13px', fontWeight: 700, color: '#78350f', marginBottom: '2px' }}>
-              토스페이먼츠 심사 진행 중 (1~3일 이내 활성화)
+              {tc.bannerTitle}
             </p>
             <p style={{ fontSize: '12px', color: '#92400e', lineHeight: 1.5 }}>
-              국내 결제는 심사 완료 후 활성화됩니다. 해외 카드는 PayPal로 즉시 결제 가능합니다.
+              {tc.bannerSub}
             </p>
           </div>
         </div>
@@ -122,7 +119,7 @@ export default function CheckoutPage() {
             style={{ background: '#f0f0ff', borderRadius: '12px', border: '1px solid #bec2ff' }}
           >
             <div>
-              <p style={{ fontSize: '12px', color: '#454558', marginBottom: '2px' }}>내 예상 환급액</p>
+              <p style={{ fontSize: '12px', color: '#454558', marginBottom: '2px' }}>{tc.refundBannerLabel}</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#0001bb' }}>
                 {refundInfo.total.toLocaleString('ko-KR')}원
               </p>
@@ -135,10 +132,10 @@ export default function CheckoutPage() {
         )}
 
         <h2 className="font-bold mb-1" style={{ fontSize: '24px', letterSpacing: '-0.02em' }}>
-          내용증명 PDF 받기
+          {tc.title}
         </h2>
         <p style={{ fontSize: '14px', color: '#454558', marginBottom: '20px' }}>
-          결제 후 즉시 다운로드 · 우체국 직접 발송 가능
+          {tc.titleSub}
         </p>
 
         {/* 상품 카드 */}
@@ -151,8 +148,8 @@ export default function CheckoutPage() {
               <FileText className="w-5 h-5" style={{ color: '#0001bb' }} />
             </div>
             <div className="flex-1">
-              <p className="font-semibold" style={{ fontSize: '15px' }}>장충금 헌터 내용증명 PDF</p>
-              <p style={{ fontSize: '12px', color: '#757589', marginTop: '2px' }}>법적 효력 있는 반환 청구 문서</p>
+              <p className="font-semibold" style={{ fontSize: '15px' }}>{tc.productName}</p>
+              <p style={{ fontSize: '12px', color: '#757589', marginTop: '2px' }}>{tc.productDesc}</p>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <p className="font-bold" style={{ fontSize: '20px', color: '#0001bb' }}>4,900원</p>
@@ -160,7 +157,7 @@ export default function CheckoutPage() {
             </div>
           </div>
           <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '14px' }} className="space-y-2">
-            {TRUST_ITEMS.map((item, i) => (
+            {tc.trustItems.map((item, i) => (
               <div key={i} className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#00C853' }} />
                 <span style={{ fontSize: '13px', color: '#454558' }}>{item}</span>
@@ -172,13 +169,13 @@ export default function CheckoutPage() {
         {/* 이름 입력 */}
         <div className="mb-5">
           <label className="block mb-2 font-semibold" style={{ fontSize: '14px' }}>
-            이름 <span style={{ fontSize: '12px', fontWeight: 400, color: '#757589' }}>(선택 — PDF에 표시됨)</span>
+            {tc.nameLabel} <span style={{ fontSize: '12px', fontWeight: 400, color: '#757589' }}>({tc.nameOptional})</span>
           </label>
           <input
             type="text"
             value={customerName}
             onChange={e => setCustomerName(e.target.value)}
-            placeholder="예: 홍길동 / John Smith"
+            placeholder={tc.namePh}
             style={{
               width: '100%', padding: '13px 16px', fontSize: '16px',
               border: '1.5px solid #c5c4db', borderRadius: '12px',
@@ -195,8 +192,8 @@ export default function CheckoutPage() {
           style={{ background: '#f3f4f5', borderRadius: '12px' }}
         >
           {([
-            { key: 'toss' as const, label: '🇰🇷 국내 결제', icon: <CreditCard className="w-4 h-4" /> },
-            { key: 'paypal' as const, label: '🌍 해외 결제 (PayPal)', icon: <Globe className="w-4 h-4" /> },
+            { key: 'toss' as const, label: tc.tabKorean, icon: <CreditCard className="w-4 h-4" /> },
+            { key: 'paypal' as const, label: tc.tabPaypal, icon: <Globe className="w-4 h-4" /> },
           ]).map(({ key, label, icon }) => (
             <button
               key={key}
@@ -240,11 +237,9 @@ export default function CheckoutPage() {
               }}
             >
               <CreditCard className="w-5 h-5" />
-              {isPaying ? '결제창 여는 중...' : '4,900원 결제하기'}
+              {isPaying ? tc.tossBtnLoading : tc.tossBtn}
             </button>
-            <p className="text-center mt-3" style={{ fontSize: '12px', color: '#757589' }}>
-              카카오페이 · 토스페이 · 신용/체크카드
-            </p>
+            <p className="text-center mt-3" style={{ fontSize: '12px', color: '#757589' }}>{tc.tossHint}</p>
           </div>
         )}
 
@@ -256,8 +251,8 @@ export default function CheckoutPage() {
               style={{ background: '#f0f0ff', borderRadius: '12px', border: '1px solid #bec2ff' }}
             >
               <p style={{ fontSize: '13px', color: '#0001bb' }}>
-                해외 카드 또는 PayPal 계정으로 결제합니다.<br />
-                결제 금액: <strong>USD $3.50</strong> (약 4,900원)
+                {tc.paypalInfo}<br />
+                <strong>{tc.paypalAmount}</strong>
               </p>
             </div>
             <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: 'USD' }}>
@@ -284,11 +279,11 @@ export default function CheckoutPage() {
                   if (result.ok) {
                     window.location.href = '/payment/success?paymentKey=paypal&orderId=paypal&amount=4900';
                   } else {
-                    setOrderError(result.error || 'PayPal 결제 실패');
+                    setOrderError(result.error || 'PayPal payment failed');
                   }
                 }}
                 onError={() => {
-                  setOrderError('PayPal 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                  setOrderError('PayPal error occurred. Please try again.');
                 }}
               />
             </PayPalScriptProvider>
@@ -297,7 +292,7 @@ export default function CheckoutPage() {
 
         <div className="flex items-center justify-center gap-2 mt-6" style={{ color: '#c5c4db' }}>
           <ShieldCheck className="w-4 h-4" />
-          <span style={{ fontSize: '12px' }}>결제 정보는 암호화되어 안전하게 처리됩니다</span>
+          <span style={{ fontSize: '12px' }}>{tc.security}</span>
         </div>
       </main>
     </div>
