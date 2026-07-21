@@ -34,6 +34,25 @@ function SuccessContent() {
     };
     setUserData(user);
 
+    const triggerPDF = () => {
+      const savedUser = sessionStorage.getItem('jcg_user_data');
+      if (savedUser) {
+        try {
+          const pdfData = JSON.parse(savedUser);
+          import('@/lib/pdf').then(({ generateKoreanPDF }) => { generateKoreanPDF(pdfData); });
+        } catch {}
+      }
+      sessionStorage.removeItem('jcg_user_data');
+    };
+
+    // PayPal: 서버에서 이미 처리됨 — Toss confirm API 스킵
+    if (paymentKey === 'paypal') {
+      setPaymentMethod('PayPal');
+      setStatus('success');
+      triggerPDF();
+      return;
+    }
+
     fetch('/api/payment/confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -44,17 +63,7 @@ function SuccessContent() {
         if (data.ok) {
           setPaymentMethod(data.paymentMethod || '카드');
           setStatus('success');
-          // 결제 성공 즉시 PDF 자동 다운로드
-          const savedUser = sessionStorage.getItem('jcg_user_data');
-          if (savedUser) {
-            try {
-              const pdfData = JSON.parse(savedUser);
-              import('@/lib/pdf').then(({ generateKoreanPDF }) => {
-                generateKoreanPDF(pdfData);
-              });
-            } catch {}
-          }
-          sessionStorage.removeItem('jcg_user_data');
+          triggerPDF();
         } else {
           setStatus('error');
         }

@@ -966,6 +966,14 @@ function StitchCalculator({
             </div>
           ))}
         </div>
+
+        {/* Footer */}
+        <div style={{ borderTop: '1px solid #e1e3e4', marginTop: '32px', paddingTop: '16px', textAlign: 'center' }}>
+          <p style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.8, margin: 0 }}>
+            Boro Refund (장충금 헌터) · info@bororefund.com<br />
+            공동주택관리법 제30조 제2항 근거 · 세입자 장기수선충당금 반환 청구 서비스
+          </p>
+        </div>
       </main>
 
       {/* ── 예시 모달 ── */}
@@ -1078,10 +1086,13 @@ function StitchResultA({
     `안녕하세요, 집주인님.\n\n장기수선충당금 반환을 요청드립니다.\n■ 거주기간: ${months}개월\n■ 월 납부액: ${monthly.toLocaleString('ko-KR')}원\n■ 총 반환 금액: ${refundTotal.toLocaleString('ko-KR')}원\n\n공동주택관리법 제30조 제2항에 따라 임차인이 대신 납부한 장기수선충당금은 임대차 종료 시 반환하여야 합니다.\n\n7일 이내 반환 요청드립니다. 감사합니다.`;
 
   const handleShare = async () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
+    const landlordUrl = `${origin}/landlord?amount=${refundTotal}&months=${months}&monthly=${monthly}`;
+    const fullMessage = `${shareMessage}\n\n📎 법적 안내 페이지: ${landlordUrl}`;
     if (typeof navigator !== 'undefined' && navigator.share) {
-      try { await navigator.share({ text: shareMessage }); } catch {}
+      try { await navigator.share({ text: fullMessage }); } catch {}
     } else {
-      navigator.clipboard.writeText(shareMessage).then(() => {
+      navigator.clipboard.writeText(fullMessage).then(() => {
         setCopyDone(true);
         setTimeout(() => setCopyDone(false), 2500);
       });
@@ -1284,6 +1295,14 @@ function StitchResultA({
         <p className="text-center" style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.6 }}>
           결제 완료 즉시 PDF 다운로드 · 법무사 검수 완료 문서
         </p>
+
+        {/* Footer */}
+        <div style={{ borderTop: '1px solid #e1e3e4', marginTop: '32px', paddingTop: '20px', textAlign: 'center' }}>
+          <p style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.8, margin: 0 }}>
+            Boro Refund (장충금 헌터) · 이메일: info@bororefund.com<br />
+            공동주택관리법 제30조 제2항에 근거한 합법적 반환 청구 서비스
+          </p>
+        </div>
       </main>
     </div>
   );

@@ -4,9 +4,25 @@ import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
+const BASE_URL = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
+
 export const metadata: Metadata = {
-  title: '장충금 헌터 - 내 숨은 돈 찾기',
-  description: '이사할 때 못 받은 장기수선충당금, 10초 만에 분석하고 돌려받으세요.',
+  title: '장충금 헌터 — 내 장기수선충당금 53만원 돌려받기',
+  description: '이사 전 꼭 확인하세요. 아파트·오피스텔 세입자 평균 53만원 환급 가능. 3초 계산 → 집주인 즉시 청구. 공동주택관리법 제30조 근거.',
+  metadataBase: new URL(BASE_URL),
+  openGraph: {
+    title: '집주인이 안 알려준 내 돈 53만원 — 지금 바로 찾으세요',
+    description: '아파트 2년 거주하면 평균 53만원. 3초 계산하고 집주인에게 즉시 청구 메시지를 보내보세요.',
+    url: BASE_URL,
+    siteName: 'Boro Refund',
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '집주인이 안 알려준 내 돈 53만원 — 장충금 헌터',
+    description: '이사 전 꼭 확인. 3초 계산 → 집주인 즉시 청구.',
+  },
 };
 
 import { Analytics } from '@vercel/analytics/react';
