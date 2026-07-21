@@ -1079,8 +1079,6 @@ function StitchResultA({
 }) {
   const { lang, tx } = useLanguage();
   const tr = tx.result;
-  const fee = Math.round(refundTotal * 0.051);
-  const instant = refundTotal - fee;
   const [copyDone, setCopyDone] = useState(false);
   const fm = (n: number) => lang === 'ko' ? `${n.toLocaleString('ko-KR')}원` : `₩${n.toLocaleString()}`;
 
@@ -1132,126 +1130,160 @@ function StitchResultA({
       />
 
       <main
-        className="flex-grow w-full px-5 md:px-10 py-8 pb-24 relative"
-        style={{ maxWidth: '672px', margin: '0 auto', zIndex: 1 }}
+        className="flex-grow w-full px-5 md:px-10 pt-6 pb-28 relative"
+        style={{ maxWidth: '560px', margin: '0 auto', zIndex: 1 }}
       >
-        {/* Headline */}
-        <div className="text-center mb-6">
+
+        {/* ── 1. 금액 히어로 ── */}
+        <div className="text-center mb-7">
           <div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-5 mx-auto"
+            className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 mx-auto"
             style={{ background: '#5cfd80' }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#00732c', fontVariationSettings: "'FILL' 1" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#00732c', fontVariationSettings: "'FILL' 1" }}>
               check_circle
             </span>
           </div>
-          <h2 className="font-bold mb-3" style={{ fontSize: 'clamp(28px, 5vw, 44px)', lineHeight: 1.22, letterSpacing: '-0.02em', color: '#0000ff', whiteSpace: 'pre-line' }}>
-            {tr.headline(refundTotal)}
-          </h2>
-          <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#454558' }}>
-            {tr.sub(instant)}
+          <p style={{ fontSize: '12px', fontWeight: 700, color: '#757589', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            {tr.heroLabel}
+          </p>
+          <p
+            className="font-black"
+            style={{ fontSize: 'clamp(44px, 12vw, 64px)', color: '#0001bb', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '8px' }}
+          >
+            {fm(refundTotal)}
+          </p>
+          <p style={{ fontSize: '12px', color: '#757589' }}>
+            {tr.calcRow(months, monthly)} · {tr.legalBasis}
           </p>
         </div>
 
-        {/* ── Step 1: 집주인 공유 (무료·즉시) ── */}
-        <div className="mb-5">
-          <p className="font-bold mb-3 text-center" style={{ fontSize: '13px', color: '#454558', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-            {lang === 'ko' ? 'STEP 1 — 먼저 집주인에게 직접 요청하세요 (무료)' : 'STEP 1 — Ask Your Landlord Directly First (Free)'}
-          </p>
-          <button
-            onClick={handleShare}
-            className="w-full flex items-center justify-center gap-2 py-5 font-bold transition-all active:scale-95"
+        {/* ── 2. 비교 카드 ── */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          {/* 무료 카드 */}
+          <div
             style={{
-              background: copyDone ? '#00C853' : '#f59e0b',
-              color: '#ffffff',
-              borderRadius: '16px',
-              fontSize: '16px',
-              boxShadow: copyDone
-                ? '0 6px 20px rgba(0,200,83,0.35)'
-                : '0 6px 20px rgba(245,158,11,0.35)',
+              borderRadius: '16px', padding: '16px',
+              border: '1.5px solid #e1e3e4', background: '#fafafa',
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>
-              {copyDone ? 'check_circle' : 'send'}
-            </span>
-            {copyDone ? tr.shareCopied : tr.shareBtn(refundTotal)}
-          </button>
-          <p className="text-center mt-2" style={{ fontSize: '12px', color: '#757589' }}>
-            {tr.shareNote}
-          </p>
-          {tr.shareNoteIntl && (
-            <p className="text-center mt-1" style={{ fontSize: '11px', color: '#c5c4db' }}>
-              {tr.shareNoteIntl}
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#757589', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              {tr.freeLabel}
             </p>
-          )}
+            <p style={{ fontSize: '22px', fontWeight: 800, color: '#454558', marginBottom: '14px' }}>
+              {tr.freePriceLbl}
+            </p>
+            {tr.freeCons.map((con) => (
+              <div key={con} style={{ display: 'flex', gap: '6px', marginBottom: '7px', alignItems: 'flex-start' }}>
+                <span style={{ color: '#ba1a1a', fontSize: '14px', flexShrink: 0, lineHeight: 1.3 }}>✗</span>
+                <span style={{ fontSize: '12px', color: '#757589', lineHeight: 1.4 }}>{con}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* 유료 카드 — 추천 */}
+          <div
+            style={{
+              borderRadius: '16px', padding: '16px',
+              border: '2px solid #0001bb', background: '#f0f0ff',
+              position: 'relative',
+            }}
+          >
+            <div style={{
+              position: 'absolute', top: '-11px', left: '50%', transform: 'translateX(-50%)',
+              background: '#0001bb', color: '#fff', borderRadius: '99px',
+              padding: '2px 12px', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap',
+            }}>
+              ✨ {tr.paidBadge}
+            </div>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#0001bb', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              {tr.paidLabel}
+            </p>
+            <p style={{ fontSize: '22px', fontWeight: 800, color: '#0001bb', marginBottom: '14px' }}>
+              4,900원
+            </p>
+            {tr.paidPros.map((pro) => (
+              <div key={pro} style={{ display: 'flex', gap: '6px', marginBottom: '7px', alignItems: 'flex-start' }}>
+                <span style={{ color: '#00C853', fontSize: '14px', flexShrink: 0, lineHeight: 1.3 }}>✓</span>
+                <span style={{ fontSize: '12px', color: '#0001bb', fontWeight: 600, lineHeight: 1.4 }}>{pro}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* ── 금액 내역 ── */}
+        {/* ── 3. ROI 앵커 ── */}
         <div
-          className="p-5 mb-5"
+          className="flex items-center justify-between px-4 py-3 mb-5"
+          style={{ background: '#191c1d', borderRadius: '12px' }}
+        >
+          <div>
+            <p style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>
+              {tr.roiText(fm(refundTotal))}
+            </p>
+            <p style={{ color: '#757589', fontSize: '11px', marginTop: '2px' }}>
+              {tr.roiSub(Math.round(refundTotal / 4900))}
+            </p>
+          </div>
+          <span style={{ fontSize: '28px' }}>💰</span>
+        </div>
+
+        {/* ── 4. PRIMARY CTA ── */}
+        <button
+          onClick={onGoCheckout}
+          className="w-full font-bold transition-all active:scale-95"
           style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e1e3e4',
-            borderLeft: '4px solid #00C853',
-            boxShadow: '0px 4px 20px rgba(0,0,255,0.05)',
+            background: 'linear-gradient(135deg, #0001bb 0%, #0000ee 100%)',
+            color: '#fff',
+            borderRadius: '18px',
+            padding: '20px 24px',
+            fontSize: '17px',
+            boxShadow: '0 10px 32px rgba(0,0,255,0.35)',
+            border: 'none',
+            cursor: 'pointer',
+            lineHeight: 1.35,
+            textAlign: 'center',
           }}
         >
-          <div className="flex items-center gap-2 mb-3">
-            <span className="material-symbols-outlined" style={{ color: '#00C853', fontSize: '18px' }}>receipt_long</span>
-            <h3 className="font-semibold uppercase" style={{ fontSize: '12px', letterSpacing: '0.05em', color: '#454558' }}>
-              {tr.breakdownTitle}
-            </h3>
-          </div>
-          {[
-            { label: tr.monthlyLbl, value: fm(monthly) },
-            { label: tr.periodLbl, value: lang === 'ko' ? `${months}개월` : `${months} months` },
-            { label: tr.totalLbl, value: fm(refundTotal) },
-            { label: tr.feeLbl, value: `- ${fm(Math.round(refundTotal * 0.09))}`, isNeg: true },
-          ].map(({ label, value, isNeg }) => (
-            <div key={label} className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0f0', fontSize: '14px' }}>
-              <span style={{ color: '#757589' }}>{label}</span>
-              <span style={{ fontWeight: 600, color: isNeg ? '#ba1a1a' : '#191c1d' }}>{value}</span>
+          {tr.primaryCta}
+        </button>
+
+        {/* ── 5. 포함 혜택 ── */}
+        <div
+          className="flex flex-col gap-2 mt-5 mb-4 px-1"
+        >
+          {tr.benefits.map((b) => (
+            <div key={b} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ color: '#00C853', fontSize: '16px', flexShrink: 0 }}>✓</span>
+              <span style={{ fontSize: '13px', color: '#454558' }}>{b}</span>
             </div>
           ))}
-          <div className="flex justify-between items-center mt-3 pt-2">
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#191c1d' }}>{tr.instantLbl}</span>
-            <span className="font-bold" style={{ fontSize: '22px', color: '#0001bb' }}>
-              {fm(refundTotal - Math.round(refundTotal * 0.09))}
-            </span>
-          </div>
         </div>
 
-        {/* ── Step 2: 집주인 거부 시 ── */}
-        <div
-          className="p-5 mb-4"
-          style={{ background: '#f8f9fa', borderRadius: '16px', border: '1px solid #e1e3e4' }}
+        {/* ── 6. 구분선 ── */}
+        <div style={{ borderTop: '1px solid #e1e3e4', margin: '16px 0' }} />
+
+        {/* ── 7. 무료 옵션 (escape hatch) ── */}
+        <button
+          onClick={handleShare}
+          className="w-full transition-all"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: copyDone ? '#00C853' : '#757589',
+            fontSize: '13px',
+            padding: '10px',
+            cursor: 'pointer',
+            textDecoration: copyDone ? 'none' : 'underline',
+            fontWeight: copyDone ? 700 : 400,
+          }}
         >
-          <p className="font-bold mb-3" style={{ fontSize: '13px', color: '#454558', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-            {lang === 'ko' ? 'STEP 2 —' : 'STEP 2 —'} {tr.step2Title}
+          {copyDone ? tr.secondaryCtaDone : tr.secondaryCta}
+        </button>
+        {tr.shareNoteIntl && (
+          <p className="text-center" style={{ fontSize: '11px', color: '#c5c4db', marginTop: '4px' }}>
+            {tr.shareNoteIntl}
           </p>
-          <p style={{ fontSize: '13px', color: '#454558', lineHeight: 1.6, marginBottom: '14px' }}>
-            {tr.step2Sub}
-          </p>
-          <button
-            onClick={onGoCheckout}
-            className="w-full flex items-center justify-center gap-2 py-4 font-semibold transition-all active:scale-95"
-            style={{
-              background: '#0000ff',
-              color: '#ffffff',
-              borderRadius: '9999px',
-              fontSize: '15px',
-              boxShadow: '0 6px 16px rgba(0,0,255,0.2)',
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>description</span>
-            {tr.pdfBtn}
-          </button>
-        </div>
-
-        <p className="text-center" style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.6 }}>
-          {tr.pdfHint}
-        </p>
+        )}
 
         {/* Footer */}
         <div style={{ borderTop: '1px solid #e1e3e4', marginTop: '32px', paddingTop: '20px', textAlign: 'center' }}>
