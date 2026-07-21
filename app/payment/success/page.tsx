@@ -44,6 +44,16 @@ function SuccessContent() {
         if (data.ok) {
           setPaymentMethod(data.paymentMethod || '카드');
           setStatus('success');
+          // 결제 성공 즉시 PDF 자동 다운로드
+          const savedUser = sessionStorage.getItem('jcg_user_data');
+          if (savedUser) {
+            try {
+              const pdfData = JSON.parse(savedUser);
+              import('@/lib/pdf').then(({ generateKoreanPDF }) => {
+                generateKoreanPDF(pdfData);
+              });
+            } catch {}
+          }
           sessionStorage.removeItem('jcg_user_data');
         } else {
           setStatus('error');
@@ -102,7 +112,7 @@ function SuccessContent() {
           </div>
           <h1 className="text-3xl font-black">결제 완료!</h1>
           <p className="text-gray-500 font-medium text-sm">
-            {paymentMethod}으로 2,900원 결제가 완료되었습니다.<br />
+            {paymentMethod}으로 4,900원 결제가 완료되었습니다.<br />
             내용증명 PDF를 지금 바로 다운로드하세요.
           </p>
           {userData && (

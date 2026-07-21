@@ -614,8 +614,8 @@ function ResultView({
   );
 }
 
-// ── Stitch 랜딩 페이지 컴포넌트 ──────────────────────────────
-
+// ── (StitchLanding 제거 — 계산기가 첫 화면) ──────────────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StitchLanding({ onUploadClick }: { onUploadClick: () => void }) {
   return (
     <div className="min-h-screen antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
@@ -1187,73 +1187,102 @@ function StitchResultA({
           </div>
         </div>
 
-        {/* ── 집주인 공유 버튼 ── */}
-        <div
-          className="p-5 mb-4"
-          style={{ background: '#fff8e1', borderRadius: '16px', border: '1px solid #ffe082' }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <span className="material-symbols-outlined" style={{ color: '#f59e0b', fontVariationSettings: "'FILL' 1" }}>share</span>
-            <h3 className="font-semibold" style={{ fontSize: '15px', color: '#78350f' }}>
-              집주인에게 직접 청구하기
-            </h3>
-          </div>
-          <p style={{ fontSize: '13px', color: '#92400e', lineHeight: 1.6, marginBottom: '12px' }}>
-            아래 버튼을 누르면 법적 근거가 포함된 청구 메시지를 카카오톡/문자로 바로 보낼 수 있습니다.
+        {/* ── Step 1: 집주인 공유 (무료·즉시) ── */}
+        <div className="mb-5">
+          <p className="font-bold mb-3 text-center" style={{ fontSize: '13px', color: '#454558', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            STEP 1 — 먼저 집주인에게 직접 요청하세요 (무료)
           </p>
           <button
             onClick={handleShare}
-            className="w-full flex items-center justify-center gap-2 py-3 font-semibold transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 py-5 font-bold transition-all active:scale-95"
             style={{
               background: copyDone ? '#00C853' : '#f59e0b',
               color: '#ffffff',
-              borderRadius: '9999px',
-              fontSize: '15px',
-              boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
+              borderRadius: '16px',
+              fontSize: '16px',
+              boxShadow: copyDone
+                ? '0 6px 20px rgba(0,200,83,0.35)'
+                : '0 6px 20px rgba(245,158,11,0.35)',
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>
               {copyDone ? 'check_circle' : 'send'}
             </span>
-            {copyDone ? '복사 완료! 카카오톡/문자에 붙여넣기 하세요' : '📲 집주인에게 청구 메시지 보내기'}
+            {copyDone
+              ? '복사 완료! 카카오톡 / 문자에 붙여넣기 하세요'
+              : `📲 집주인에게 ${refundTotal.toLocaleString('ko-KR')}원 청구 메시지 보내기`}
           </button>
+          <p className="text-center mt-2" style={{ fontSize: '12px', color: '#757589' }}>
+            법적 근거 포함 메시지 자동 생성 · 카카오톡 / 문자 바로 전송
+          </p>
         </div>
 
-        {/* ── 결제 CTA ── */}
-        <div className="flex flex-col gap-3 mb-4">
+        {/* ── 금액 내역 ── */}
+        <div
+          className="p-5 mb-5"
+          style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e1e3e4',
+            borderLeft: '4px solid #00C853',
+            boxShadow: '0px 4px 20px rgba(0,0,255,0.05)',
+          }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined" style={{ color: '#00C853', fontSize: '18px' }}>receipt_long</span>
+            <h3 className="font-semibold uppercase" style={{ fontSize: '12px', letterSpacing: '0.05em', color: '#454558' }}>
+              예상 환급금 산출 내역
+            </h3>
+          </div>
+          {[
+            { label: '월 납부액', value: `${monthly.toLocaleString('ko-KR')}원` },
+            { label: '거주 기간', value: `${months}개월` },
+            { label: '총 환급 가능 금액', value: `${refundTotal.toLocaleString('ko-KR')}원` },
+            { label: '법률 처리 수수료 (9%)', value: `- ${Math.round(refundTotal * 0.09).toLocaleString('ko-KR')}원`, isNeg: true },
+          ].map(({ label, value, isNeg }) => (
+            <div key={label} className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0f0', fontSize: '14px' }}>
+              <span style={{ color: '#757589' }}>{label}</span>
+              <span style={{ fontWeight: 600, color: isNeg ? '#ba1a1a' : '#191c1d' }}>{value}</span>
+            </div>
+          ))}
+          <div className="flex justify-between items-center mt-3 pt-2">
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#191c1d' }}>권리양도 시 즉시 수령액</span>
+            <span className="font-bold" style={{ fontSize: '22px', color: '#0001bb' }}>
+              {(refundTotal - Math.round(refundTotal * 0.09)).toLocaleString('ko-KR')}원
+            </span>
+          </div>
+        </div>
+
+        {/* ── Step 2: 집주인 거부 시 ── */}
+        <div
+          className="p-5 mb-4"
+          style={{ background: '#f8f9fa', borderRadius: '16px', border: '1px solid #e1e3e4' }}
+        >
+          <p className="font-bold mb-3" style={{ fontSize: '13px', color: '#454558', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            STEP 2 — 집주인이 거부했나요?
+          </p>
+          <p style={{ fontSize: '13px', color: '#454558', lineHeight: 1.6, marginBottom: '14px' }}>
+            내용증명 PDF를 발송하면 <strong>법적 효력이 즉시 발생</strong>합니다.
+            집주인 거부 시 소액심판 승소율 95%+.
+          </p>
           <button
             onClick={onGoCheckout}
-            className="w-full flex items-center justify-center gap-2 py-4 px-6 font-semibold transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 py-4 font-semibold transition-all active:scale-95"
             style={{
               background: '#0000ff',
               color: '#ffffff',
               borderRadius: '9999px',
-              fontSize: '16px',
-              boxShadow: '0 8px 16px rgba(0,0,255,0.2)',
+              fontSize: '15px',
+              boxShadow: '0 6px 16px rgba(0,0,255,0.2)',
             }}
           >
-            <span className="material-symbols-outlined">account_balance</span>
-            내 계좌로 즉시 입금 받기 — 권리 양도
-          </button>
-
-          <button
-            onClick={onGoCheckout}
-            className="w-full flex items-center justify-center gap-2 py-4 px-6 font-semibold transition-all active:scale-95"
-            style={{
-              background: '#ffffff',
-              color: '#0000ff',
-              border: '1.5px solid #0000ff',
-              borderRadius: '9999px',
-              fontSize: '16px',
-            }}
-          >
-            <span className="material-symbols-outlined">description</span>
-            내용증명 PDF 받기 — 2,900원
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>description</span>
+            내용증명 PDF 받기 — 4,900원
           </button>
         </div>
 
-        <p className="text-center" style={{ fontSize: '12px', color: '#757589', lineHeight: 1.6 }}>
-          * 즉시 입금은 보로(Boro)가 반환채권을 양도받아 집주인에게 직접 청구하며, 분쟁 없이 즉시 정산됩니다.
+        <p className="text-center" style={{ fontSize: '11px', color: '#c5c4db', lineHeight: 1.6 }}>
+          결제 완료 즉시 PDF 다운로드 · 법무사 검수 완료 문서
         </p>
       </main>
     </div>

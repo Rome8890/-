@@ -4,7 +4,7 @@ import { randomBytes } from 'crypto';
 
 // 서버 고정 상품 테이블 — 클라이언트가 금액을 위조할 수 없음
 const PRODUCTS: Record<string, { name: string; amount: number }> = {
-  content_cert: { name: '장충금 헌터 내용증명 PDF', amount: 2900 },
+  content_cert: { name: '장충금 헌터 내용증명 PDF', amount: 4900 },
 };
 
 export async function POST(request: Request) {

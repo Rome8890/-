@@ -113,10 +113,16 @@ ${isRegen ? '⑦ 이전 답변보다 반드시 더 구체적이고 상세하게 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.35, maxOutputTokens: 8192 }
+        generationConfig: { temperature: 0.35, maxOutputTokens: 8192,
+                            thinkingConfig: { thinkingBudget: 0 } }
       })
     }
   );
+  if (res.status === 429) {
+    await tg('sendMessage', { chat_id: Number(process.env.TELEGRAM_CHAT_ID),
+      text: '⚠️ Gemini API 오늘 할당량 소진\n새 키 교체가 필요합니다.\n내일 자정 자동 리셋됩니다.' });
+    return null;
+  }
   const data = await res.json();
   let text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   // JSON 블록 추출
@@ -138,11 +144,11 @@ async function tg(method: string, body: object) {
 }
 
 async function sendDraft(chatId: number, questionTitle: string, questionUrl: string,
-  answer: string, serviceUrl: string, rowId: string, version: number) {
-  const preview = answer.length > 700 ? answer.slice(0, 700) + '...' : answer;
+  answer: string, qid: number, rowId: string, version: number) {
+  const serviceUrl = `${SERVICE_BASE}/?from=jisikin&qid=${qid}`;
   await tg('sendMessage', {
     chat_id: chatId,
-    text: `📝 [답변 v${version} 준비완료]\n\n📌 ${questionTitle}\n🔗 ${questionUrl}\n\n${preview}\n\n🌐 서비스: ${serviceUrl}\n\n✏️ 수정하려면 이 메시지에 Reply로 요청하세요`,
+    text: `📝 [답변 v${version} 준비완료]\n\n📌 ${questionTitle}\n🔗 질문링크: ${questionUrl}\n\n${answer}\n\n📎 맞춤 서비스링크 (qid=${qid}): ${serviceUrl}\n🆔 ${rowId}\n\n✏️ 수정하려면 이 메시지에 Reply로 요청하세요`,
     reply_markup: {
       inline_keyboard: [
         [
@@ -248,12 +254,13 @@ export async function POST(request: Request) {
       }
 
       if (action === 'copy') {
-        const { data: row } = await supabase.from('jisikin_answers').select('answer_text,question_title').eq('id', rowId).single();
+        const { data: row } = await supabase.from('jisikin_answers').select('answer_text,question_title,question_body').eq('id', rowId).single();
         if (!row) return NextResponse.json({ ok: true });
-        // 순수 텍스트만 전송 — 텔레그램에서 길게 눌러 전체 선택 후 복사
+        const qidCopy = classifyQid(row.question_title, row.question_body || '');
+        const serviceUrl = `${SERVICE_BASE}/?from=jisikin&qid=${qidCopy}`;
         await tg('sendMessage', {
           chat_id: chatId,
-          text: row.answer_text
+          text: `${row.answer_text}\n\n내용증명서 무료 발급 → ${serviceUrl}`
         });
       }
 
@@ -290,7 +297,7 @@ export async function POST(request: Request) {
         }).eq('id', rowId);
 
         await sendDraft(chatId, row.question_title, row.question_url, result.answer,
-          `${SERVICE_BASE}/?id=${rowId}`, rowId, newVersion);
+          classifyQid(row.question_title, row.question_body || ''), rowId, newVersion);
       }
       return NextResponse.json({ ok: true });
     }
@@ -374,7 +381,7 @@ export async function POST(request: Request) {
       }).eq('id', row.id);
 
       await sendDraft(chatId, row.question_title, row.question_url, result.answer,
-        `${SERVICE_BASE}/?id=${row.id}`, row.id, newVersion);
+        qidRegen, row.id, newVersion);
       return NextResponse.json({ ok: true });
     }
 
@@ -398,7 +405,7 @@ export async function POST(request: Request) {
     }
 
     // 원본 메시지에서 row ID 추출
-    const idMatch = replyTo.text.match(/\?id=([a-f0-9-]{36})/);
+    const idMatch = replyTo.text.match(/🆔 ([a-f0-9-]{36})/) || replyTo.text.match(/\?id=([a-f0-9-]{36})/);
     if (!idMatch) {
       await tg('sendMessage', { chat_id: chatId, text: '⚠️ 답변 ID를 찾을 수 없어요. 원본 답변 메시지에 Reply 해주세요.' });
       return NextResponse.json({ ok: true });
@@ -427,7 +434,7 @@ export async function POST(request: Request) {
     }).eq('id', rowId);
 
     await sendDraft(chatId, row.question_title, row.question_url, result.answer,
-      `${SERVICE_BASE}/?id=${rowId}`, rowId, newVersion);
+      qidFeedback, rowId, newVersion);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
