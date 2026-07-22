@@ -1079,6 +1079,7 @@ function StitchResultA({
 }) {
   const { lang, tx } = useLanguage();
   const tr = tx.result;
+  const { track } = useTracker();
   const [copyDone, setCopyDone] = useState(false);
   const fm = (n: number) => lang === 'ko' ? `${n.toLocaleString('ko-KR')}원` : `₩${n.toLocaleString()}`;
 
@@ -1087,6 +1088,7 @@ function StitchResultA({
     `안녕하세요, 집주인님.\n\n장기수선충당금 반환을 요청드립니다.\n■ 거주기간: ${months}개월\n■ 월 납부액: ${monthly.toLocaleString('ko-KR')}원\n■ 총 반환 금액: ${refundTotal.toLocaleString('ko-KR')}원\n\n공동주택관리법 제30조 제2항에 따라 임차인이 대신 납부한 장기수선충당금은 임대차 종료 시 반환하여야 합니다.\n\n7일 이내 반환 요청드립니다. 감사합니다.`;
 
   const handleShare = async () => {
+    track('click_share_free', { refund_total: refundTotal, months, monthly, lang });
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
     const landlordUrl = `${origin}/landlord?amount=${refundTotal}&months=${months}&monthly=${monthly}`;
     const fullMessage = `${shareMessage}\n\n📎 법적 안내 페이지: ${landlordUrl}`;
@@ -1229,7 +1231,10 @@ function StitchResultA({
 
         {/* ── 4. PRIMARY CTA ── */}
         <button
-          onClick={onGoCheckout}
+          onClick={() => {
+            track('click_payment', { refund_total: refundTotal, months, monthly, lang });
+            onGoCheckout();
+          }}
           className="w-full font-bold transition-all active:scale-95"
           style={{
             background: 'linear-gradient(135deg, #0001bb 0%, #0000ee 100%)',

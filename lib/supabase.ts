@@ -12,6 +12,7 @@ export type TrackingEvent =
   | 'view_page'
   | 'click_calculate'
   | 'click_payment'
+  | 'click_share_free'
   | 'payment_success'
   | 'download_pdf'
   | 'click_download'
