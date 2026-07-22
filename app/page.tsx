@@ -1532,8 +1532,8 @@ function JangChungGeumApp() {
   const isJisikinInbound = !!searchParams.get('from') || !!searchParams.get('id');
   const isAdminMode = searchParams.get('mode') === 'admin';
 
-  // 첫 화면 = 계산기 (직접 방문자)
-  if (step === 'HOME' && !isJisikinInbound && !isAdminMode) {
+  // 첫 화면 = 계산기 (직접 방문자 또는 결과→뒤로 시)
+  if ((step === 'HOME' && !isJisikinInbound && !isAdminMode) || step === 'CALCULATOR') {
     return (
       <StitchCalculator
         showHero
