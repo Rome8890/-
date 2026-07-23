@@ -13,15 +13,14 @@ const PRODUCT_ID = 'content_cert';
 
 type PaymentMode = 'toss' | 'paypal';
 
-const inputStyle: React.CSSProperties = {
+const baseInput: React.CSSProperties = {
   width: '100%', padding: '12px 14px', fontSize: '15px',
   border: '1.5px solid #c5c4db', borderRadius: '10px',
-  outline: 'none', color: '#191c1d', background: '#fafafa',
-  fontFamily: 'inherit',
+  outline: 'none', color: '#191c1d', background: '#fafafa', fontFamily: 'inherit',
 };
 
-function Field({ label, hint, required, children }: {
-  label: string; hint?: string; required?: boolean; children: React.ReactNode;
+function Field({ label, hint, required, warn, children }: {
+  label: string; hint?: string; required?: boolean; warn?: string; children: React.ReactNode;
 }) {
   return (
     <div style={{ marginBottom: '14px' }}>
@@ -31,12 +30,36 @@ function Field({ label, hint, required, children }: {
         {hint && <span style={{ fontWeight: 400, color: '#9a99b0', marginLeft: '6px', fontSize: '11px' }}>{hint}</span>}
       </label>
       {children}
+      {warn && <p style={{ fontSize: '11px', color: '#ba1a1a', marginTop: '4px' }}>{warn}</p>}
     </div>
   );
 }
 
+function SectionHead({ label }: { label: string }) {
+  return (
+    <p style={{ fontSize: '11px', fontWeight: 700, color: '#0001bb', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '20px 0 12px' }}>
+      {label}
+    </p>
+  );
+}
+
+function Input({ value, onChange, placeholder, style }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; style?: React.CSSProperties;
+}) {
+  return (
+    <input
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      style={{ ...baseInput, ...style }}
+      onFocus={e => (e.target.style.borderColor = '#0001bb')}
+      onBlur={e => (e.target.style.borderColor = '#c5c4db')}
+    />
+  );
+}
+
 export default function CheckoutPage() {
-  const { tx } = useLanguage();
+  const { lang, tx } = useLanguage();
   const tc = tx.checkout;
   const [mode, setMode] = useState<PaymentMode>('toss');
   const [isPaying, setIsPaying] = useState(false);
@@ -44,7 +67,6 @@ export default function CheckoutPage() {
   const [refundInfo, setRefundInfo] = useState<{ months: number; monthly: number; total: number } | null>(null);
   const [docOpen, setDocOpen] = useState(true);
 
-  // 서류 정보 필드
   const [myName, setMyName] = useState('');
   const [myAddr, setMyAddr] = useState('');
   const [myAccount, setMyAccount] = useState('');
@@ -61,7 +83,6 @@ export default function CheckoutPage() {
     } catch {}
   }, []);
 
-  // 완성도 계산 (9항목)
   const fields = [myName, myAddr, myAccount, llName, llAddr, aptName, contractStart, contractEnd];
   const filled = fields.filter(Boolean).length;
   const pct = Math.round((filled / fields.length) * 100);
@@ -69,11 +90,11 @@ export default function CheckoutPage() {
 
   const savePdfData = () => {
     sessionStorage.setItem('jcg_user_data', JSON.stringify({
-      apartmentName: aptName || '해당 아파트',
+      apartmentName: aptName || (lang === 'ko' ? '해당 아파트' : 'The Apartment'),
       months: refundInfo?.months ?? 24,
       monthlyAmount: refundInfo?.monthly ?? 20000,
       refundAmount: refundInfo?.total ?? 500000,
-      userName: myName || '세입자',
+      userName: myName || (lang === 'ko' ? '세입자' : 'Tenant'),
       userAddress: myAddr,
       userAccount: myAccount,
       landlordName: llName,
@@ -109,7 +130,7 @@ export default function CheckoutPage() {
     } catch (e: any) {
       const msg = e?.message || '';
       if (!msg.includes('취소') && !msg.includes('cancel') && !msg.includes('CANCEL')) {
-        setOrderError(msg || '결제 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        setOrderError(msg || (lang === 'ko' ? '결제 오류가 발생했습니다.' : 'Payment error. Please try again.'));
       }
     } finally {
       setIsPaying(false);
@@ -118,7 +139,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
-      {/* Header */}
       <header
         className="flex items-center justify-between px-5 md:px-10 h-16 w-full sticky top-0 z-10"
         style={{ backgroundColor: '#FDFCFB', borderBottom: '1px solid #e1e3e4' }}
@@ -143,16 +163,27 @@ export default function CheckoutPage() {
               </p>
             </div>
             <div style={{ textAlign: 'right', fontSize: '12px', opacity: 0.8 }}>
-              <div>{refundInfo.months}개월</div>
-              <div>× {refundInfo.monthly.toLocaleString('ko-KR')}원/월</div>
+              <div>{refundInfo.months}{lang === 'ko' ? '개월' : ' months'}</div>
+              <div>× {refundInfo.monthly.toLocaleString('ko-KR')}{lang === 'ko' ? '원/월' : '₩/mo'}</div>
             </div>
           </div>
         )}
 
-        {/* ── 서류 정보 입력 섹션 ── */}
+        {/* 영문 사용자: 한국어 서류 안내 배너 */}
+        {lang === 'en' && (
+          <div className="flex items-start gap-3 px-4 py-3 mb-4"
+            style={{ background: '#f0f4ff', borderRadius: '12px', border: '1px solid #bec2ff' }}>
+            <span style={{ fontSize: '18px', flexShrink: 0 }}>🇰🇷</span>
+            <p style={{ fontSize: '12px', color: '#0001bb', lineHeight: 1.6 }}>
+              <strong>Your document will be written in Korean.</strong><br />
+              Korean law governs this contract — the landlord reads Korean. We generate the 내용증명 (certified letter) in Korean automatically. You fill in English; we handle the rest.
+            </p>
+          </div>
+        )}
+
+        {/* ── 서류 정보 입력 ── */}
         <div style={{ borderRadius: '16px', border: '1.5px solid #e1e3e4', marginBottom: '18px', overflow: 'hidden' }}>
 
-          {/* 섹션 헤더 (접기/펼치기) */}
           <button
             onClick={() => setDocOpen(o => !o)}
             className="w-full flex items-center justify-between px-5 py-4"
@@ -161,16 +192,13 @@ export default function CheckoutPage() {
             <div className="flex items-center gap-3">
               <span style={{ fontSize: '20px' }}>✍️</span>
               <div style={{ textAlign: 'left' }}>
-                <p style={{ fontSize: '14px', fontWeight: 700, color: '#191c1d' }}>
-                  내용증명 서류 정보
-                </p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: '#191c1d' }}>{tc.docSectionTitle}</p>
                 <p style={{ fontSize: '11px', color: isComplete ? '#00732c' : '#757589', marginTop: '1px' }}>
-                  {isComplete ? '✅ 모두 완성! 완전한 법적 효력의 서류가 발급됩니다' : `${filled}/${fields.length} 완성 — 더 채울수록 법적 효력이 강해집니다`}
+                  {isComplete ? tc.docSectionComplete : tc.docSectionSub(filled, fields.length)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* 진행 바 */}
               <div style={{ width: '40px', height: '4px', background: '#e1e3e4', borderRadius: '2px', overflow: 'hidden' }}>
                 <div style={{ width: `${pct}%`, height: '100%', background: isComplete ? '#00C853' : '#0001bb', borderRadius: '2px', transition: 'width 0.3s' }} />
               </div>
@@ -181,64 +209,45 @@ export default function CheckoutPage() {
           {docOpen && (
             <div style={{ padding: '0 20px 20px', borderTop: '1px solid #e1e3e4' }}>
 
-              {/* 나의 정보 */}
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#0001bb', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '16px 0 12px' }}>
-                👤 나의 정보 (발신인)
-              </p>
-              <Field label="성명" required hint="서류에 표시됩니다">
-                <input style={inputStyle} value={myName} onChange={e => setMyName(e.target.value)}
-                  placeholder="홍길동" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
+              {/* 나 / My Info */}
+              <SectionHead label={tc.myInfoTitle} />
+              <Field label={tc.myNameLabel} hint={tc.myNameHint} required>
+                <Input value={myName} onChange={setMyName} placeholder={tc.myNamePh} />
               </Field>
-              <Field label="주소" hint="발신인 주소 — 우체국 발송 시 필요">
-                <input style={inputStyle} value={myAddr} onChange={e => setMyAddr(e.target.value)}
-                  placeholder="서울시 강남구 테헤란로 123, 101동 502호" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
+              <Field label={tc.myAddrLabel} hint={tc.myAddrHint}>
+                <Input value={myAddr} onChange={setMyAddr} placeholder={tc.myAddrPh} />
               </Field>
-              <Field label="반환받을 계좌" hint="집주인이 바로 송금할 수 있게 됩니다">
-                <input style={inputStyle} value={myAccount} onChange={e => setMyAccount(e.target.value)}
-                  placeholder="카카오뱅크 3333-00-0000000 (예금주: 홍길동)" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
+              <Field label={tc.myAccountLabel} hint={tc.myAccountHint}>
+                <Input value={myAccount} onChange={setMyAccount} placeholder={tc.myAccountPh} />
               </Field>
 
-              {/* 집주인 정보 */}
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#0001bb', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '20px 0 12px' }}>
-                🏠 집주인 정보 (수신인)
-              </p>
-              <Field label="집주인 성명" hint="모르면 '집주인' 으로 두셔도 됩니다">
-                <input style={inputStyle} value={llName} onChange={e => setLlName(e.target.value)}
-                  placeholder="김임대" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
+              {/* 집주인 / Landlord */}
+              <SectionHead label={tc.llInfoTitle} />
+              <Field label={tc.llNameLabel} hint={tc.llNameHint}>
+                <Input value={llName} onChange={setLlName} placeholder={tc.llNamePh} />
               </Field>
-              <Field label="집주인 주소" required hint="우체국 발송 필수 — 등기부등본 확인">
-                <input style={inputStyle} value={llAddr} onChange={e => setLlAddr(e.target.value)}
-                  placeholder="서울시 서초구 반포대로 456" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
-                <p style={{ fontSize: '11px', color: '#ba1a1a', marginTop: '4px' }}>
-                  ⚠ 집주인 주소가 없으면 우체국 발송 불가 — 등기부등본에서 확인하세요
-                </p>
+              <Field label={tc.llAddrLabel} hint={tc.llAddrHint} required warn={tc.llAddrWarn}>
+                <Input value={llAddr} onChange={setLlAddr} placeholder={tc.llAddrPh} />
               </Field>
 
-              {/* 부동산 정보 */}
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#0001bb', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '20px 0 12px' }}>
-                📍 부동산 정보
-              </p>
-              <Field label="아파트명 + 동·호수">
-                <input style={inputStyle} value={aptName} onChange={e => setAptName(e.target.value)}
-                  placeholder="래미안 퍼스티지 101동 502호" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
+              {/* 부동산 / Property */}
+              <SectionHead label={tc.aptInfoTitle} />
+              <Field label={tc.aptNameLabel}>
+                <Input value={aptName} onChange={setAptName} placeholder={tc.aptNamePh} />
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <Field label="계약 시작일">
-                  <input style={inputStyle} value={contractStart} onChange={e => setContractStart(e.target.value)}
-                    placeholder="2022.01.01" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
+                <Field label={tc.startDateLabel}>
+                  <Input value={contractStart} onChange={setContractStart} placeholder={tc.startDatePh} />
                 </Field>
-                <Field label="계약 종료일">
-                  <input style={inputStyle} value={contractEnd} onChange={e => setContractEnd(e.target.value)}
-                    placeholder="2024.01.01" onFocus={e=>(e.target.style.borderColor='#0001bb')} onBlur={e=>(e.target.style.borderColor='#c5c4db')} />
+                <Field label={tc.endDateLabel}>
+                  <Input value={contractEnd} onChange={setContractEnd} placeholder={tc.endDatePh} />
                 </Field>
               </div>
 
-              {/* 안내 박스 */}
+              {/* 팁 */}
               <div style={{ background: '#f0f4ff', borderRadius: '10px', padding: '12px 14px', marginTop: '8px' }}>
-                <p style={{ fontSize: '12px', color: '#0001bb', lineHeight: 1.7 }}>
-                  💡 <strong>집주인 주소 모를 때</strong> → 등기부등본 발급 (인터넷 등기소 무료)<br/>
-                  💡 <strong>계약 기간</strong> → 임대차 계약서의 시작일~종료일<br/>
-                  💡 나머지 빈 항목은 결제 후 서류에서 직접 수정도 가능합니다
+                <p style={{ fontSize: '12px', color: '#0001bb', lineHeight: 1.8, whiteSpace: 'pre-line' }}>
+                  {tc.docTip}
                 </p>
               </div>
             </div>
@@ -294,7 +303,6 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* 토스 결제 */}
         {mode === 'toss' && (
           <div>
             <button onClick={handleTossPayment} disabled={isPaying}
@@ -309,7 +317,6 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* PayPal 결제 */}
         {mode === 'paypal' && (
           <div>
             <div className="px-4 py-3 mb-4" style={{ background: '#f0f0ff', borderRadius: '12px', border: '1px solid #bec2ff' }}>

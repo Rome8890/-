@@ -59,6 +59,28 @@ export const translations = {
       pdfBtn: '내용증명 PDF 받기 — 4,900원',
       pdfHint: '결제 완료 즉시 PDF 다운로드 · 법무사 검수 완료 문서',
       footer: 'Boro Refund · info@bororefund.com\n공동주택관리법 제30조 제2항에 근거한 합법적 반환 청구 서비스',
+
+      // 리디자인: 비교 카드 + 단일 CTA 구조
+      heroLabel: '내 장기수선충당금 환급 예상액',
+      legalBasis: '공동주택관리법 제30조 · 100% 법적 권리',
+      calcRow: (months: number, monthly: number) =>
+        `${months}개월 × ${monthly.toLocaleString('ko-KR')}원/월`,
+      freeLabel: '일반 문자',
+      freePriceLbl: '무료',
+      freeCons: ['집주인이 무시 가능', '법적 효력 없음', '거부 시 다시 처음부터'],
+      paidLabel: '공식 청구서',
+      paidBadge: '추천',
+      paidPros: ['법적 효력 즉시 발생', '내용증명 PDF 동봉', '소액심판 근거 확보'],
+      roiText: (refundFmt: string) => `₩4,900으로 ${refundFmt} 회수 기대`,
+      roiSub: (ratio: number) => `투자 대비 ${ratio}배 수익`,
+      primaryCta: '📮 공식 청구서로 집주인에게 보내기 — 4,900원',
+      benefits: [
+        '내용증명 PDF 즉시 생성 · 발급',
+        '집주인 발송용 공식 메시지 자동 생성',
+        '소액심판 근거 자료 포함 (승소율 95%+)',
+      ],
+      secondaryCta: '일단 무료 문자만 먼저 보낼게요 →',
+      secondaryCtaDone: '복사됨 ✓  카카오톡에 붙여넣기 하세요',
     },
 
     checkout: {
@@ -86,6 +108,28 @@ export const translations = {
       paypalInfo: '해외 카드 또는 PayPal 계정으로 결제합니다.',
       paypalAmount: '결제 금액: USD $3.50 (약 4,900원)',
       security: '결제 정보는 암호화되어 안전하게 처리됩니다',
+
+      // 서류 정보 폼
+      docSectionTitle: '✍️ 내용증명 서류 정보',
+      docSectionSub: (filled: number, total: number) => `${filled}/${total} 완성 — 더 채울수록 법적 효력이 강해집니다`,
+      docSectionComplete: '✅ 모두 완성! 완전한 법적 효력의 서류가 발급됩니다',
+      docKoreanNote: '📄 서류는 한국어로 작성됩니다 — 집주인이 한국인이기 때문입니다',
+      docTip: '💡 집주인 주소 모를 때 → 인터넷 등기소(iros.go.kr)에서 무료 발급\n💡 계약 기간 → 임대차 계약서의 시작일~종료일\n💡 빈 항목은 결제 후 서류에서 직접 수정 가능',
+
+      myInfoTitle: '👤 나의 정보 (발신인)',
+      myNameLabel: '성명', myNameHint: '서류에 표시됩니다', myNamePh: '홍길동',
+      myAddrLabel: '주소', myAddrHint: '발신인 주소 — 우체국 발송 시 필요', myAddrPh: '서울시 강남구 테헤란로 123, 101동 502호',
+      myAccountLabel: '반환받을 계좌', myAccountHint: '집주인이 바로 송금할 수 있게 됩니다', myAccountPh: '카카오뱅크 3333-00-0000000 (예금주: 홍길동)',
+
+      llInfoTitle: '🏠 집주인 정보 (수신인)',
+      llNameLabel: '집주인 성명', llNameHint: '모르면 그대로 두셔도 됩니다', llNamePh: '김임대',
+      llAddrLabel: '집주인 주소', llAddrHint: '우체국 발송 필수 — 등기부등본 확인', llAddrPh: '서울시 서초구 반포대로 456',
+      llAddrWarn: '⚠ 집주인 주소가 없으면 우체국 발송 불가 — 인터넷 등기소에서 확인하세요',
+
+      aptInfoTitle: '📍 부동산 정보',
+      aptNameLabel: '아파트명 + 동·호수', aptNamePh: '래미안 퍼스티지 101동 502호',
+      startDateLabel: '계약 시작일', startDatePh: '2022.01.01',
+      endDateLabel: '계약 종료일', endDatePh: '2024.01.01',
     },
 
     success: {
@@ -169,6 +213,27 @@ export const translations = {
       pdfBtn: 'Get Written Notice PDF — ₩4,900',
       pdfHint: 'Instant download after payment · Attorney reviewed document',
       footer: 'Boro Refund · info@bororefund.com\nLegal refund claim service under Korean Housing Management Act Article 30',
+
+      heroLabel: 'My Estimated Refund',
+      legalBasis: 'Korean Housing Management Act §30 · Your Legal Right',
+      calcRow: (months: number, monthly: number) =>
+        `${months} months × ₩${monthly.toLocaleString()}/mo`,
+      freeLabel: 'Text Message',
+      freePriceLbl: 'Free',
+      freeCons: ['Landlord can ignore it', 'No legal weight', 'Back to start if refused'],
+      paidLabel: 'Official Notice',
+      paidBadge: 'Recommended',
+      paidPros: ['Immediate legal effect', 'Written Notice PDF included', 'Small claims evidence ready'],
+      roiText: (refundFmt: string) => `₩4,900 investment → ${refundFmt} recovered`,
+      roiSub: (ratio: number) => `${ratio}x return on your investment`,
+      primaryCta: '📮 Send Official Notice to Landlord — ₩4,900',
+      benefits: [
+        'Written Notice PDF instant generation',
+        'Official message auto-generated for landlord',
+        'Small claims court evidence included (95%+ win rate)',
+      ],
+      secondaryCta: 'Send a basic text message for free →',
+      secondaryCtaDone: 'Copied ✓  Paste into KakaoTalk or SMS',
     },
 
     checkout: {
@@ -196,6 +261,28 @@ export const translations = {
       paypalInfo: 'Pay with international card or PayPal account.',
       paypalAmount: 'Amount: USD $3.50 (approx. ₩4,900)',
       security: 'Your payment is encrypted and processed securely',
+
+      // Document form
+      docSectionTitle: '✍️ Document Information',
+      docSectionSub: (filled: number, total: number) => `${filled}/${total} complete — more fields = stronger legal protection`,
+      docSectionComplete: '✅ All complete! Your document will have full legal effect',
+      docKoreanNote: '📄 Your document will be written in Korean — Korean law requires this as your landlord is Korean',
+      docTip: '💡 Landlord address: Check the Property Registry at iros.go.kr (free)\n💡 Lease dates: From your 임대차 계약서 (lease agreement)\n💡 Empty fields can be filled in manually before sending',
+
+      myInfoTitle: '👤 My Information (Sender)',
+      myNameLabel: 'Full Name', myNameHint: 'Will appear on the document', myNamePh: 'John Smith',
+      myAddrLabel: 'My Address', myAddrHint: 'Your address in Korea — needed for postal delivery', myAddrPh: 'Apt 502, 101 Bldg, 123 Teheran-ro, Gangnam-gu, Seoul',
+      myAccountLabel: 'Bank Account for Refund', myAccountHint: 'Makes it easy for landlord to send the money', myAccountPh: 'Bank name + account number (e.g. KakaoBank 3333-00-0000000)',
+
+      llInfoTitle: '🏠 Landlord Information (Recipient)',
+      llNameLabel: 'Landlord Name', llNameHint: 'Leave blank if unknown', llNamePh: 'Kim Imdae',
+      llAddrLabel: 'Landlord Address', llAddrHint: 'Required for postal delivery — find in property registry', llAddrPh: '456 Banpo-daero, Seocho-gu, Seoul',
+      llAddrWarn: '⚠ Without landlord address, postal delivery is impossible — check iros.go.kr for the property registry',
+
+      aptInfoTitle: '📍 Property Information',
+      aptNameLabel: 'Apartment + Unit Number', aptNamePh: 'Raemian Prestige, Bldg 101, Unit 502',
+      startDateLabel: 'Lease Start Date', startDatePh: '2022.01.01',
+      endDateLabel: 'Lease End Date', endDatePh: '2024.01.01',
     },
 
     success: {
