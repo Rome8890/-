@@ -1080,26 +1080,26 @@ function StitchResultA({
   const { lang, tx } = useLanguage();
   const tr = tx.result;
   const { track } = useTracker();
+  const [showMsgModal, setShowMsgModal] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
   const fm = (n: number) => lang === 'ko' ? `${n.toLocaleString('ko-KR')}원` : `₩${n.toLocaleString()}`;
 
-  // 공유 메시지는 집주인(한국인)에게 보내는 것이므로 항상 한국어
+  // 집주인에게 보낼 문자 틀 (항상 한국어)
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
+  const landlordUrl = `${origin}/landlord?amount=${refundTotal}&months=${months}&monthly=${monthly}`;
   const shareMessage =
-    `안녕하세요, 집주인님.\n\n장기수선충당금 반환을 요청드립니다.\n■ 거주기간: ${months}개월\n■ 월 납부액: ${monthly.toLocaleString('ko-KR')}원\n■ 총 반환 금액: ${refundTotal.toLocaleString('ko-KR')}원\n\n공동주택관리법 제30조 제2항에 따라 임차인이 대신 납부한 장기수선충당금은 임대차 종료 시 반환하여야 합니다.\n\n7일 이내 반환 요청드립니다. 감사합니다.`;
+    `안녕하세요, 집주인님.\n\n저는 [아파트명] [동/호수]에 거주했던 세입자입니다.\n\n임대차 계약 기간 동안 관리비에 포함하여 납부한 장기수선충당금의 반환을 요청드립니다.\n\n■ 거주기간: ${months}개월\n■ 월 납부액: ${monthly.toLocaleString('ko-KR')}원\n■ 총 반환 금액: ${refundTotal.toLocaleString('ko-KR')}원\n\n공동주택관리법 제30조 제2항에 따라 임차인이 대신 납부한 장기수선충당금은 임대차 종료 시 반환하여야 합니다.\n\n7일 이내 반환을 요청드립니다. 감사합니다.\n\n📎 법적 안내: ${landlordUrl}`;
 
-  const handleShare = async () => {
+  const handleShowMsg = () => {
     track('click_share_free', { refund_total: refundTotal, months, monthly, lang });
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
-    const landlordUrl = `${origin}/landlord?amount=${refundTotal}&months=${months}&monthly=${monthly}`;
-    const fullMessage = `${shareMessage}\n\n📎 법적 안내 페이지: ${landlordUrl}`;
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try { await navigator.share({ text: fullMessage }); } catch {}
-    } else {
-      navigator.clipboard.writeText(fullMessage).then(() => {
-        setCopyDone(true);
-        setTimeout(() => setCopyDone(false), 2500);
-      });
-    }
+    setShowMsgModal(true);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shareMessage).then(() => {
+      setCopyDone(true);
+      setTimeout(() => setCopyDone(false), 2000);
+    });
   };
 
   return (
@@ -1269,25 +1269,85 @@ function StitchResultA({
 
         {/* ── 7. 무료 옵션 (escape hatch) ── */}
         <button
-          onClick={handleShare}
+          onClick={handleShowMsg}
           className="w-full transition-all"
           style={{
             background: 'none',
             border: 'none',
-            color: copyDone ? '#00C853' : '#757589',
+            color: '#757589',
             fontSize: '13px',
             padding: '10px',
             cursor: 'pointer',
-            textDecoration: copyDone ? 'none' : 'underline',
-            fontWeight: copyDone ? 700 : 400,
+            textDecoration: 'underline',
           }}
         >
-          {copyDone ? tr.secondaryCtaDone : tr.secondaryCta}
+          {tr.secondaryCta}
         </button>
         {tr.shareNoteIntl && (
           <p className="text-center" style={{ fontSize: '11px', color: '#c5c4db', marginTop: '4px' }}>
             {tr.shareNoteIntl}
           </p>
+        )}
+
+        {/* ── 무료 문자 모달 ── */}
+        {showMsgModal && (
+          <div
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.55)',
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            }}
+            onClick={() => setShowMsgModal(false)}
+          >
+            <div
+              style={{
+                background: '#fff', borderRadius: '20px 20px 0 0',
+                padding: '24px 20px 40px', width: '100%', maxWidth: '560px',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#191c1d' }}>
+                  집주인에게 보낼 문자 틀
+                </p>
+                <button
+                  onClick={() => setShowMsgModal(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '20px', color: '#757589', cursor: 'pointer' }}
+                >✕</button>
+              </div>
+
+              <p style={{ fontSize: '12px', color: '#757589', marginBottom: '10px' }}>
+                아래 문자를 <strong>카카오톡 · 문자(SMS)</strong>로 집주인에게 직접 보내세요.<br/>
+                <span style={{ color: '#ba1a1a' }}>[ ] 안의 내용을 실제 정보로 수정</span>하고 전송하세요.
+              </p>
+
+              <textarea
+                readOnly
+                value={shareMessage}
+                rows={12}
+                style={{
+                  width: '100%', fontSize: '13px', lineHeight: 1.75,
+                  border: '1.5px solid #c5c4db', borderRadius: '12px',
+                  padding: '14px', color: '#191c1d', background: '#fafafa',
+                  resize: 'none', outline: 'none', fontFamily: 'inherit',
+                }}
+                onFocus={e => e.target.select()}
+              />
+
+              <button
+                onClick={handleCopy}
+                style={{
+                  marginTop: '12px', width: '100%',
+                  background: copyDone ? '#00C853' : '#191c1d',
+                  color: '#fff', border: 'none', borderRadius: '12px',
+                  padding: '14px', fontSize: '15px', fontWeight: 700,
+                  cursor: 'pointer', transition: 'background 0.2s',
+                }}
+              >
+                {copyDone ? '✓ 복사됨 — 카카오톡에 붙여넣기 하세요' : '📋 전체 복사하기'}
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Footer */}
