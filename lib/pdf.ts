@@ -4,11 +4,12 @@ export interface PDFData {
   monthlyAmount: number;
   refundAmount: number;
   userName: string;
-  userAddress?: string;       // 발신인(임차인) 주소
-  landlordName?: string;      // 수신인(집주인) 이름
-  landlordAddress?: string;   // 수신인(집주인) 주소
-  contractStart?: string;     // 임대차 계약 시작일
-  contractEnd?: string;       // 임대차 계약 종료일
+  userAddress?: string;
+  userAccount?: string;       // 반환받을 계좌
+  landlordName?: string;
+  landlordAddress?: string;
+  contractStart?: string;
+  contractEnd?: string;
 }
 
 const today = () => {
@@ -24,6 +25,7 @@ export const generateKoreanPDF = (data: PDFData) => {
     refundAmount,
     userName,
     userAddress = '(주소 미입력)',
+    userAccount,
     landlordName = '집주인',
     landlordAddress = '(집주인 주소 미입력)',
     contractStart = '',
@@ -330,8 +332,12 @@ export const generateKoreanPDF = (data: PDFData) => {
     소유자(임대인)를 대신하여 납부한 장기수선충당금 합계
     <strong>금 ${formattedAmount}원 정</strong>을,
     본 내용증명 <strong>수령일로부터 7일 이내</strong>에
-    본인 계좌로 반환하여 주실 것을 정중히 요청드립니다.
+    아래 계좌로 반환하여 주실 것을 정중히 요청드립니다.
   </p>
+
+  <div style="margin:10px 0 18px;padding:12px 16px;border:1px dashed #00267a;background:#f0f4ff;font-size:13px;line-height:1.9;">
+    💳 반환 계좌: <strong>${userAccount || '(결제 시 계좌 입력 가능)'}</strong>${userAccount ? ` (예금주: ${userName})` : ''}
+  </div>
 
   <div class="warning-box">
     <strong>⚠ 미이행 시 법적 조치 예고</strong><br>
