@@ -762,12 +762,16 @@ function StitchCalculator({
   const tc = tx.calc;
   const [months, setMonths] = useState('');
   const [monthly, setMonthly] = useState('');
+  const [totalDirect, setTotalDirect] = useState('');
+  const [inputMode, setInputMode] = useState<'monthly' | 'total'>('monthly');
   const [showExample, setShowExample] = useState(false);
 
   const monthsNum = parseInt(months) || 0;
   const monthlyNum = parseInt(monthly.replace(/,/g, '')) || 0;
-  const total = monthsNum * monthlyNum;
-  const isValid = monthsNum > 0 && monthlyNum > 0;
+  const totalDirectNum = parseInt(totalDirect.replace(/,/g, '')) || 0;
+  const total = inputMode === 'monthly' ? monthsNum * monthlyNum : totalDirectNum;
+  const monthlyForResult = inputMode === 'monthly' ? monthlyNum : (monthsNum > 0 ? Math.round(totalDirectNum / monthsNum) : 0);
+  const isValid = monthsNum > 0 && (inputMode === 'monthly' ? monthlyNum > 0 : totalDirectNum > 0);
 
   const fmtNum = (val: string) =>
     val.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -865,10 +869,28 @@ function StitchCalculator({
           className="p-6 mb-5"
           style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e1e3e4', boxShadow: '0 4px 20px rgba(0,0,255,0.05)' }}
         >
-          <p className="font-semibold mb-4" style={{ fontSize: '15px', color: '#191c1d' }}>
-            {lang === 'ko' ? '직접 입력해 주세요' : 'Enter your details'}
-          </p>
+          {/* 입력 방식 토글 */}
+          <div className="flex gap-2 mb-5 p-1" style={{ background: '#f3f4f5', borderRadius: '10px' }}>
+            {([
+              { key: 'monthly', ko: '월 납부액으로 계산', en: 'Monthly amount' },
+              { key: 'total', ko: '납부확인서 총액 입력', en: 'Total (certificate)' },
+            ] as const).map(({ key, ko, en }) => (
+              <button key={key} onClick={() => setInputMode(key)}
+                style={{
+                  flex: 1, padding: '8px 4px', fontSize: '12px', fontWeight: 600,
+                  borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  background: inputMode === key ? '#fff' : 'transparent',
+                  color: inputMode === key ? '#0001bb' : '#757589',
+                  boxShadow: inputMode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s',
+                }}>
+                {lang === 'ko' ? ko : en}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-4">
+            {/* 거주 기간 — 항상 표시 */}
             <div>
               <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
                 {tc.monthsLabel}
@@ -893,32 +915,70 @@ function StitchCalculator({
               </div>
             </div>
 
-            <div>
-              <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
-                {tc.monthlyLabel}
-                <span style={{ fontSize: '12px', fontWeight: 400, color: '#757589', marginLeft: '6px' }}>
-                  ({tc.monthlyTip})
-                </span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={monthly}
-                  onChange={e => setMonthly(fmtNum(e.target.value))}
-                  placeholder={tc.monthlyPh}
-                  style={{
-                    width: '100%', padding: '14px 40px 14px 16px', fontSize: '16px',
-                    border: '1.5px solid #c5c4db', borderRadius: '12px',
-                    outline: 'none', color: '#191c1d', background: '#fafafa', fontWeight: 600,
-                  }}
-                  onFocus={e => (e.target.style.borderColor = '#0001bb')}
-                  onBlur={e => (e.target.style.borderColor = '#c5c4db')}
-                />
-                <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#757589', fontWeight: 600 }}>
-                  {lang === 'ko' ? '원' : '₩'}
-                </span>
+            {/* 월 납부액 모드 */}
+            {inputMode === 'monthly' && (
+              <div>
+                <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
+                  {tc.monthlyLabel}
+                  <span style={{ fontSize: '12px', fontWeight: 400, color: '#757589', marginLeft: '6px' }}>
+                    ({tc.monthlyTip})
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={monthly}
+                    onChange={e => setMonthly(fmtNum(e.target.value))}
+                    placeholder={tc.monthlyPh}
+                    style={{
+                      width: '100%', padding: '14px 40px 14px 16px', fontSize: '16px',
+                      border: '1.5px solid #c5c4db', borderRadius: '12px',
+                      outline: 'none', color: '#191c1d', background: '#fafafa', fontWeight: 600,
+                    }}
+                    onFocus={e => (e.target.style.borderColor = '#0001bb')}
+                    onBlur={e => (e.target.style.borderColor = '#c5c4db')}
+                  />
+                  <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#757589', fontWeight: 600 }}>
+                    {lang === 'ko' ? '원' : '₩'}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* 총액 직접 입력 모드 */}
+            {inputMode === 'total' && (
+              <div>
+                <label className="block mb-2 font-semibold" style={{ fontSize: '14px', color: '#191c1d' }}>
+                  {lang === 'ko' ? '납부확인서 총액' : 'Total amount (from certificate)'}
+                  <span style={{ fontSize: '12px', fontWeight: 400, color: '#757589', marginLeft: '6px' }}>
+                    {lang === 'ko' ? '관리사무소 발급 납부확인서의 합계 금액' : 'Sum shown on 납부확인서 printout'}
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={totalDirect}
+                    onChange={e => setTotalDirect(fmtNum(e.target.value))}
+                    placeholder={lang === 'ko' ? '예: 552,000' : 'e.g. 552,000'}
+                    style={{
+                      width: '100%', padding: '14px 40px 14px 16px', fontSize: '16px',
+                      border: '1.5px solid #0001bb', borderRadius: '12px',
+                      outline: 'none', color: '#191c1d', background: '#f8f8ff', fontWeight: 600,
+                    }}
+                    onFocus={e => (e.target.style.borderColor = '#0000ee')}
+                    onBlur={e => (e.target.style.borderColor = '#0001bb')}
+                  />
+                  <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#757589', fontWeight: 600 }}>
+                    {lang === 'ko' ? '원' : '₩'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '11px', color: '#0001bb', marginTop: '6px' }}>
+                  {lang === 'ko'
+                    ? '💡 관리사무소에서 "장기수선충당금 납부확인서"를 무료로 발급받을 수 있습니다'
+                    : '💡 Ask your Building Management Office for a "납부확인서" printout — free of charge'}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* 실시간 결과 */}
@@ -944,7 +1004,7 @@ function StitchCalculator({
         </div>
 
         <button
-          onClick={() => isValid && onResult({ months: monthsNum, monthly: monthlyNum, total })}
+          onClick={() => isValid && onResult({ months: monthsNum, monthly: monthlyForResult, total })}
           disabled={!isValid}
           className="w-full flex items-center justify-center gap-2 py-4 px-6 font-semibold transition-all active:scale-95"
           style={{
