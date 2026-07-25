@@ -10,14 +10,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: '비밀번호가 틀렸습니다' }, { status: 401 });
   }
 
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
-    return NextResponse.json({ ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY 미설정' }, { status: 500 });
-  }
-
+  // anon 키 사용 — tracking_events는 PII 없음, RLS SELECT 정책으로 제어
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceKey
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   const since = new Date();
