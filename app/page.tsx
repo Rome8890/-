@@ -398,7 +398,7 @@ function ResultView({
         className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(0,163,255,0.3)] active:scale-95 transition-all text-sm"
       >
         <Download className="w-4 h-4" />
-        내용증명 PDF 지금 받기 — 2,900원
+        내용증명 PDF 지금 받기 — 4,900원
       </button>
 
       {/* 법령 핵심요약 */}
@@ -559,7 +559,7 @@ function ResultView({
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-white/35 text-[10px] line-through">법무사 의뢰 30~50만원</p>
-              <p className="text-[#00A3FF] font-black text-2xl">2,900원</p>
+              <p className="text-[#00A3FF] font-black text-2xl">4,900원</p>
             </div>
           </div>
         </div>
@@ -583,7 +583,7 @@ function ResultView({
             className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0066FF] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_30px_rgba(0,163,255,0.4)] active:scale-95 transition-all text-base"
           >
             <Download className="w-5 h-5" />
-            내용증명 PDF 지금 받기 — 2,900원
+            내용증명 PDF 지금 받기 — 4,900원
           </button>
 
           {/* 무료 미리보기 */}
@@ -1982,7 +1982,7 @@ function JangChungGeumApp() {
                   ) : (
                     <>
                       <Download className="w-5 h-5" />
-                      내용증명 PDF 받기 (2,900원)
+                      내용증명 PDF 받기 (4,900원)
                     </>
                   )}
                 </PrimaryButton>
@@ -2075,7 +2075,7 @@ function JangChungGeumApp() {
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
-                    내용증명 PDF 받기 (2,900원)
+                    내용증명 PDF 받기 (4,900원)
                   </>
                 )}
               </PrimaryButton>
