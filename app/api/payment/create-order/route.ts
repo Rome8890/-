@@ -8,7 +8,7 @@ const PRODUCTS: Record<string, { name: string; amount: number }> = {
 
 export async function POST(request: Request) {
   try {
-    const { productId, customerName } = await request.json();
+    const { productId } = await request.json();
 
     const product = PRODUCTS[productId];
     if (!product) {
@@ -21,13 +21,12 @@ export async function POST(request: Request) {
     try {
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
       await supabase.from('payments').insert({
         order_id: orderId,
         amount: product.amount,
         status: 'pending',
-        customer_name: customerName || null,
         payment_method: null,
       });
     } catch (dbErr) {
