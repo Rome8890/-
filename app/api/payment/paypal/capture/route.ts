@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // Supabase 업데이트 (idempotency: pending일 때만)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     await supabase
