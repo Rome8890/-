@@ -368,12 +368,13 @@ function PdfPreviewCard({ data }: { data: PDFData }) {
       >
         <iframe
           ref={iframeRef}
-          scrolling="no"
           title="내용증명서 미리보기"
-          style={{ width: '100%', height: '360px', border: 'none', display: 'block', pointerEvents: 'none' }}
+          style={{ width: '100%', height: '540px', border: 'none', display: 'block' }}
         />
       </div>
-      <p className="text-[11px] text-gray-400 text-center px-2">{tr.previewCaption}</p>
+      <p className="text-[11px] text-gray-400 text-center px-2 flex items-center justify-center gap-1">
+        <span>↕ 스크롤해서 서류 내용을 확인해 보세요</span> · {tr.previewCaption}
+      </p>
     </div>
   );
 }

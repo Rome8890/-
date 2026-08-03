@@ -17,9 +17,16 @@ const today = () => {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
-// preview=true 인 경우, 문서 뒷부분을 블러 처리하고 잠금 배지를 띄우는
-// "맛보기" 버전 HTML을 만든다. 실제 PDF(print/overlay)와 미리보기 카드가
-// 동일한 소스에서 생성되도록 하나의 빌더를 공유한다.
+// 문서 표지에 쓰는 관리번호 — 매번 랜덤하지 않도록 청구 금액 기반으로 고정 생성
+const docNumber = (refundAmount: number) => {
+  const d = new Date();
+  const seq = String(refundAmount % 10000).padStart(4, '0');
+  return `BR-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}-${seq}`;
+};
+
+// preview=true 인 경우, 문서 뒷부분(계좌 정보 · 법적 경고 · 서명란)을 블러 처리하고
+// 잠금 배지를 띄우는 "맛보기" 버전 HTML을 만든다. 실제 PDF(print/overlay)와
+// 미리보기 카드가 동일한 소스에서 생성되도록 하나의 빌더를 공유한다.
 const buildCertHTML = (data: PDFData, preview: boolean) => {
   const {
     apartmentName,
@@ -42,28 +49,40 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
     ? `${contractStart} ~ ${contractEnd}`
     : `총 ${months}개월`;
 
-  // 미리보기에서는 아래 내용부터 블러 처리 (핵심 법령 1개는 보여주고, 나머지는 결제 후 공개)
+  // 정식 발급 문서 느낌을 주는 반복 워터마크 — body 배경 패턴으로 깔아
+  // 스크롤 어느 지점에서도(박스 사이 여백에서) 은은하게 비치도록 한다.
+  const watermarkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="260" height="220">'
+    + '<text x="0" y="150" font-family="Noto Serif KR, serif" font-size="34" font-weight="900" '
+    + 'fill="#000" fill-opacity="0.04" transform="rotate(-28 130 110)">내용증명</text></svg>';
+  const watermarkDataUri = `data:image/svg+xml,${encodeURIComponent(watermarkSvg)}`;
+
+  // 미리보기에서는 "결제 후 실행 가능해지는" 마지막 구간만 블러 처리한다.
+  // (법령 근거 · 청구 내역 · 요청 취지는 전부 공개해 신뢰를 주고,
+  //  반환 계좌 · 법적 조치 예고 · 서명란은 가려 결제 유인을 만든다)
   const blurStart = preview ? '<div class="preview-blur">' : '';
   const blurEnd = preview ? '</div>' : '';
 
   const previewStyles = preview ? `
-    html, body { overflow: hidden; }
     .preview-blur { filter: blur(3px); user-select: none; pointer-events: none; }
-    .preview-fade {
-      position: fixed; left: 0; right: 0; bottom: 0; height: 200px;
-      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.85) 45%, #fff 78%);
-      pointer-events: none;
+    .unlock-divider {
+      position: relative; z-index: 1;
+      margin: 20px 0 8px;
+      padding-top: 30px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.92) 55%, #fff 100%);
+      text-align: center;
     }
-    .preview-badge {
-      position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%);
-      background: #111827; color: #fff; padding: 10px 22px; border-radius: 999px;
-      font-size: 13px; font-weight: 700; white-space: nowrap;
-      box-shadow: 0 10px 28px rgba(0,0,0,.28);
+    .unlock-badge {
+      display: inline-block;
+      background: #111827; color: #fff; padding: 10px 20px; border-radius: 999px;
+      font-size: 12px; font-weight: 700; white-space: nowrap;
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
     }
   ` : '';
 
-  const previewOverlay = preview
-    ? `<div class="preview-fade"></div><div class="preview-badge">🔒 결제 후 전체 내용증명 확인 가능</div>`
+  // 스크롤해서 끝까지 내려도 "여기부터는 결제 후 공개" 임을 보여주는
+  // 인라인(고정 아님) 구분선 — 실제 미리보기 문서 흐름 안에 자연스럽게 삽입된다.
+  const unlockDivider = preview
+    ? `<div class="unlock-divider"><span class="unlock-badge">🔒 결제 후 반환 계좌 · 서명란 · 전체 내용증명 확인 가능</span></div>`
     : '';
 
   const printSection = preview ? '' : `
@@ -79,46 +98,69 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
 <head>
   <meta charset="UTF-8">
   <title>장기수선충당금 반환 청구 내용증명</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { position: relative; }
     body {
       font-family: 'Noto Sans KR', '맑은 고딕', sans-serif;
       font-size: 13px;
       line-height: 1.8;
       color: #111;
-      background: #fff;
-      padding: 40px 60px;
+      background-color: #fff;
+      background-image: url('${watermarkDataUri}');
+      background-repeat: repeat;
+      padding: 34px 56px 44px;
+    }
+    .doc-control-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; position: relative; z-index: 1;
+    }
+    .doc-no {
+      font-size: 10.5px; color: #666; letter-spacing: 0.3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .review-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #fdecec; color: #b91c1c; border: 1px solid #f3b9b9;
+      font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+      white-space: nowrap;
     }
     .stamp-bar {
+      position: relative; z-index: 1;
       text-align: center;
-      font-size: 22px;
+      font-family: 'Noto Serif KR', serif;
+      font-size: 23px;
       font-weight: 900;
-      letter-spacing: 6px;
+      letter-spacing: 10px;
       border: 3px double #000;
-      padding: 14px 0;
-      margin-bottom: 32px;
+      padding: 15px 0;
+      margin-bottom: 26px;
     }
     .meta-table {
+      position: relative; z-index: 1;
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 28px;
+      margin-bottom: 26px;
       font-size: 13px;
     }
     .meta-table td {
-      padding: 8px 12px;
-      border: 1px solid #bbb;
+      padding: 9px 12px;
+      border: 1px solid #999;
       vertical-align: top;
     }
     .meta-table .label {
-      background: #f0f0f0;
+      background: #f2f2f2;
       font-weight: 700;
       width: 90px;
       text-align: center;
       vertical-align: middle;
+      font-size: 12px;
     }
     .meta-table .sub { font-size: 11px; color: #555; }
     h2 {
+      position: relative; z-index: 1;
+      font-family: 'Noto Serif KR', serif;
       font-size: 15px;
       font-weight: 700;
       border-bottom: 2px solid #000;
@@ -126,11 +168,13 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
       margin: 26px 0 14px;
     }
     .body-text {
+      position: relative; z-index: 1;
       line-height: 2;
       margin-bottom: 18px;
       text-align: justify;
     }
     .law-box {
+      position: relative; z-index: 1;
       border: 1px solid #999;
       border-left: 4px solid #222;
       padding: 14px 18px;
@@ -139,9 +183,10 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
       font-size: 12px;
       line-height: 1.9;
     }
-    .law-box strong { font-size: 13px; display: block; margin-bottom: 4px; }
+    .law-box strong { font-family: 'Noto Serif KR', serif; font-size: 13px; display: block; margin-bottom: 4px; }
     .law-box .note { font-size: 11px; color: #555; margin-top: 6px; }
     .checklist {
+      position: relative; z-index: 1;
       background: #f7f7f7;
       border: 1px solid #ddd;
       border-radius: 4px;
@@ -156,21 +201,22 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
       font-size: 12px;
     }
     .demand-table {
+      position: relative; z-index: 1;
       width: 100%;
       border-collapse: collapse;
       margin: 12px 0;
       font-size: 13px;
     }
     .demand-table th {
-      background: #f0f0f0;
+      background: #f2f2f2;
       font-weight: 700;
       padding: 8px 12px;
-      border: 1px solid #bbb;
+      border: 1px solid #999;
       text-align: left;
     }
     .demand-table td {
       padding: 8px 12px;
-      border: 1px solid #bbb;
+      border: 1px solid #999;
     }
     .demand-table .total {
       font-weight: 900;
@@ -178,6 +224,7 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
       color: #000;
     }
     .warning-box {
+      position: relative; z-index: 1;
       margin-top: 20px;
       padding: 14px 18px;
       border: 1px solid #ccc;
@@ -190,20 +237,34 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
       line-height: 2.6;
     }
     .sign-row {
+      position: relative; z-index: 1;
       display: flex;
       justify-content: space-between;
       border-top: 1px solid #ddd;
-      padding-top: 16px;
-      margin-top: 16px;
+      padding-top: 20px;
+      margin-top: 18px;
     }
-    .sign-block { font-size: 13px; }
+    .sign-block { font-size: 13px; position: relative; }
     .sign-line {
       display: inline-block;
       width: 100px;
       border-bottom: 1px solid #000;
       margin-left: 8px;
     }
+    /* 관인 느낌의 붉은 원형 직인 */
+    .seal {
+      position: absolute; top: -14px; left: 168px;
+      width: 46px; height: 46px; border-radius: 50%;
+      border: 2px solid #b91c1c;
+      color: #b91c1c;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 900;
+      transform: rotate(-9deg);
+      opacity: 0.85;
+      pointer-events: none;
+    }
     .validity-box {
+      position: relative; z-index: 1;
       margin-top: 20px;
       padding: 12px 18px;
       border: 2px solid #222;
@@ -211,8 +272,9 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
       font-size: 11px;
       line-height: 1.8;
     }
-    .validity-box strong { display: block; margin-bottom: 6px; font-size: 12px; }
+    .validity-box strong { font-family: 'Noto Serif KR', serif; display: block; margin-bottom: 6px; font-size: 12px; }
     .footer-note {
+      position: relative; z-index: 1;
       margin-top: 40px;
       font-size: 10px;
       color: #999;
@@ -241,6 +303,11 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
   </style>
 </head>
 <body>
+
+  <div class="doc-control-row">
+    <span class="doc-no">문서번호 ${docNumber(refundAmount)} · 작성일 ${today()}</span>
+    <span class="review-badge">✓ 법무사 검수 완료 서식</span>
+  </div>
 
   <div class="stamp-bar">내 용 증 명</div>
 
@@ -297,7 +364,6 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
     </div>
   </div>
 
-  ${blurStart}
   <div class="law-box">
     <strong>② 법원 확정 판결 (임차인 반환 청구권 — 전국 법원 확립 법리)</strong>
     장기수선충당금은 공동주택 소유자가 부담하는 것이 원칙이므로, 임차인이 대신
@@ -372,6 +438,8 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
     아래 계좌로 반환하여 주실 것을 정중히 요청드립니다.
   </p>
 
+  ${unlockDivider}
+  ${blurStart}
   <div style="margin:10px 0 18px;padding:12px 16px;border:1px dashed #00267a;background:#f0f4ff;font-size:13px;line-height:1.9;">
     💳 반환 계좌: <strong>${userAccount || '(결제 시 계좌 입력 가능)'}</strong>${userAccount ? ` (예금주: ${userName})` : ''}
   </div>
@@ -401,6 +469,7 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
 
   <div class="sign-row">
     <div class="sign-block">
+      <div class="seal">印</div>
       <div>발신일: ${today()}</div>
       <div style="margin-top:8px;">위 임차인: <strong>${userName}</strong> <span class="sign-line">&nbsp;</span> (인)</div>
       <div style="font-size:12px; color:#555; margin-top:4px;">${userAddress}</div>
@@ -416,7 +485,6 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
     우체국 발송 전 반드시 수신인 주소 및 납부확인서 첨부 여부를 확인하십시오.
   </div>
   ${blurEnd}
-  ${previewOverlay}
   ${printSection}
 
 </body>
@@ -474,6 +542,7 @@ export const generateKoreanPDF = (data: PDFData) => {
   }
 };
 
-// 결제 전 "맛보기" 미리보기 — 문서 뒷부분은 블러 처리된 HTML 문자열만 반환.
-// 호출부(React)에서 iframe의 srcDoc으로 렌더링해 카드 형태로 보여준다.
+// 결제 전 "맛보기" 미리보기 — 문서 뒷부분(반환 계좌·법적 경고·서명란)만 블러 처리된
+// HTML 문자열을 반환한다. 호출부(React)에서 iframe의 srcDoc으로 렌더링해
+// 카드 형태로 보여준다.
 export const getPreviewHTML = (data: PDFData) => buildCertHTML(data, true);
