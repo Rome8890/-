@@ -17,7 +17,10 @@ const today = () => {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
-export const generateKoreanPDF = (data: PDFData) => {
+// preview=true 인 경우, 문서 뒷부분을 블러 처리하고 잠금 배지를 띄우는
+// "맛보기" 버전 HTML을 만든다. 실제 PDF(print/overlay)와 미리보기 카드가
+// 동일한 소스에서 생성되도록 하나의 빌더를 공유한다.
+const buildCertHTML = (data: PDFData, preview: boolean) => {
   const {
     apartmentName,
     months,
@@ -38,6 +41,38 @@ export const generateKoreanPDF = (data: PDFData) => {
   const contractPeriod = contractStart && contractEnd
     ? `${contractStart} ~ ${contractEnd}`
     : `총 ${months}개월`;
+
+  // 미리보기에서는 아래 내용부터 블러 처리 (핵심 법령 1개는 보여주고, 나머지는 결제 후 공개)
+  const blurStart = preview ? '<div class="preview-blur">' : '';
+  const blurEnd = preview ? '</div>' : '';
+
+  const previewStyles = preview ? `
+    html, body { overflow: hidden; }
+    .preview-blur { filter: blur(3px); user-select: none; pointer-events: none; }
+    .preview-fade {
+      position: fixed; left: 0; right: 0; bottom: 0; height: 200px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.85) 45%, #fff 78%);
+      pointer-events: none;
+    }
+    .preview-badge {
+      position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%);
+      background: #111827; color: #fff; padding: 10px 22px; border-radius: 999px;
+      font-size: 13px; font-weight: 700; white-space: nowrap;
+      box-shadow: 0 10px 28px rgba(0,0,0,.28);
+    }
+  ` : '';
+
+  const previewOverlay = preview
+    ? `<div class="preview-fade"></div><div class="preview-badge">🔒 결제 후 전체 내용증명 확인 가능</div>`
+    : '';
+
+  const printSection = preview ? '' : `
+  <div class="no-print">
+    <button class="print-btn" onclick="window.print()">🖨️ PDF로 저장 / 인쇄하기</button>
+    <p style="margin-top:12px; font-size:12px; color:#888;">
+      [인쇄] → 대상을 'PDF로 저장' 선택 → 저장 후 우체국 3부 출력
+    </p>
+  </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="ko">
@@ -202,6 +237,7 @@ export const generateKoreanPDF = (data: PDFData) => {
       .no-print { display: none; }
       body { padding: 20px 30px; }
     }
+    ${previewStyles}
   </style>
 </head>
 <body>
@@ -261,6 +297,7 @@ export const generateKoreanPDF = (data: PDFData) => {
     </div>
   </div>
 
+  ${blurStart}
   <div class="law-box">
     <strong>② 법원 확정 판결 (임차인 반환 청구권 — 전국 법원 확립 법리)</strong>
     장기수선충당금은 공동주택 소유자가 부담하는 것이 원칙이므로, 임차인이 대신
@@ -378,16 +415,19 @@ export const generateKoreanPDF = (data: PDFData) => {
     본 내용증명은 장충금 헌터(jangchoonggim-jyl1256-gmailcoms-projects.vercel.app)를 통해 작성되었습니다.<br>
     우체국 발송 전 반드시 수신인 주소 및 납부확인서 첨부 여부를 확인하십시오.
   </div>
-
-  <div class="no-print">
-    <button class="print-btn" onclick="window.print()">🖨️ PDF로 저장 / 인쇄하기</button>
-    <p style="margin-top:12px; font-size:12px; color:#888;">
-      [인쇄] → 대상을 'PDF로 저장' 선택 → 저장 후 우체국 3부 출력
-    </p>
-  </div>
+  ${blurEnd}
+  ${previewOverlay}
+  ${printSection}
 
 </body>
 </html>`;
+
+  return html;
+};
+
+// 결제 후 실제 발급되는 전체 문서 — 인페이지 오버레이로 표시 후 인쇄/저장
+export const generateKoreanPDF = (data: PDFData) => {
+  const html = buildCertHTML(data, false);
 
   // 팝업/새탭 없이 현재 페이지 위에 오버레이로 표시 (차단 없음)
   const existing = document.getElementById('pdf-overlay');
@@ -433,3 +473,7 @@ export const generateKoreanPDF = (data: PDFData) => {
     doc.close();
   }
 };
+
+// 결제 전 "맛보기" 미리보기 — 문서 뒷부분은 블러 처리된 HTML 문자열만 반환.
+// 호출부(React)에서 iframe의 srcDoc으로 렌더링해 카드 형태로 보여준다.
+export const getPreviewHTML = (data: PDFData) => buildCertHTML(data, true);

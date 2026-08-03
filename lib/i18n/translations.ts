@@ -81,6 +81,8 @@ export const translations = {
       ],
       secondaryCta: '일단 무료 문자만 먼저 보낼게요 →',
       secondaryCtaDone: '복사됨 ✓  카카오톡에 붙여넣기 하세요',
+      previewLabel: '📄 발급될 내용증명서 미리보기',
+      previewCaption: '실제 발급될 문서의 일부입니다. 전체 내용은 결제 후 확인할 수 있어요.',
     },
 
     checkout: {
@@ -130,6 +132,11 @@ export const translations = {
       aptNameLabel: '아파트명 + 동·호수', aptNamePh: '래미안 퍼스티지 101동 502호',
       startDateLabel: '계약 시작일', startDatePh: '2022.01.01',
       endDateLabel: '계약 종료일', endDatePh: '2024.01.01',
+
+      infoStepTitle: '✍️ 내용증명서에 들어갈 정보를 입력해 주세요',
+      infoStepSub: '입력한 정보로 실제 발급되는 서류가 만들어집니다',
+      nextBtn: '다음: 미리보기 보기 →',
+      requiredNotice: '⚠ 성명과 집주인 주소는 필수 입력 항목입니다',
     },
 
     success: {
@@ -234,6 +241,8 @@ export const translations = {
       ],
       secondaryCta: 'Send a basic text message for free →',
       secondaryCtaDone: 'Copied ✓  Paste into KakaoTalk or SMS',
+      previewLabel: '📄 Preview of Your Written Notice',
+      previewCaption: 'This is a partial preview of the actual document. Unlock the full version after payment.',
     },
 
     checkout: {
@@ -283,6 +292,11 @@ export const translations = {
       aptNameLabel: 'Apartment + Unit Number', aptNamePh: 'Raemian Prestige, Bldg 101, Unit 502',
       startDateLabel: 'Lease Start Date', startDatePh: '2022.01.01',
       endDateLabel: 'Lease End Date', endDatePh: '2024.01.01',
+
+      infoStepTitle: '✍️ Enter the details for your Written Notice',
+      infoStepSub: 'Your actual legal document will be generated from this information',
+      nextBtn: 'Next: Preview My Notice →',
+      requiredNotice: '⚠ Full name and landlord address are required',
     },
 
     success: {

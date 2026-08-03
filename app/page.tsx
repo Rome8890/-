@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -21,6 +21,8 @@ import { useTracker } from '@/hooks/useTracker';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { useLanguage } from '@/lib/i18n/context';
 import { LangToggle } from '@/components/LangToggle';
+import { Field, SectionHead, Input } from '@/components/DocFormFields';
+import type { PDFData } from '@/lib/pdf';
 
 // ── 데이터 ────────────────────────────────────────────────────
 
@@ -335,6 +337,46 @@ const InputField = ({ label, placeholder, value, onChange, type = 'text', suffix
     </div>
   </div>
 );
+
+// ── 내용증명서 결제 전 미리보기 카드 (맛보기 — 문서 뒷부분은 블러 처리) ──
+
+function PdfPreviewCard({ data }: { data: PDFData }) {
+  const { tx } = useLanguage();
+  const tr = tx.result;
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    import('@/lib/pdf').then(({ getPreviewHTML }) => {
+      if (!cancelled && iframeRef.current) {
+        iframeRef.current.srcdoc = getPreviewHTML(data);
+      }
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.refundAmount, data.userName, data.landlordAddress, data.apartmentName]);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <FileText className="w-4 h-4 text-gray-400" />
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{tr.previewLabel}</p>
+      </div>
+      <div
+        className="rounded-2xl overflow-hidden border border-gray-200"
+        style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+      >
+        <iframe
+          ref={iframeRef}
+          scrolling="no"
+          title="내용증명서 미리보기"
+          style={{ width: '100%', height: '360px', border: 'none', display: 'block', pointerEvents: 'none' }}
+        />
+      </div>
+      <p className="text-[11px] text-gray-400 text-center px-2">{tr.previewCaption}</p>
+    </div>
+  );
+}
 
 // ── ResultView 컴포넌트 ───────────────────────────────────────
 
@@ -1128,12 +1170,14 @@ function StitchResultA({
   refundTotal,
   monthly,
   months,
+  userInfo,
   onGoCheckout,
   onBack,
 }: {
   refundTotal: number;
   monthly: number;
   months: number;
+  userInfo: UserInfo;
   onGoCheckout: () => void;
   onBack: () => void;
 }) {
@@ -1143,6 +1187,21 @@ function StitchResultA({
   const [showMsgModal, setShowMsgModal] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
   const fm = (n: number) => lang === 'ko' ? `${n.toLocaleString('ko-KR')}원` : `₩${n.toLocaleString()}`;
+
+  // 입력된 정보로 실제 발급될 내용증명서 미리보기 데이터 생성
+  const previewData: PDFData = {
+    apartmentName: userInfo.apartmentName || '해당 아파트',
+    months,
+    monthlyAmount: monthly,
+    refundAmount: refundTotal,
+    userName: userInfo.userName || '세입자',
+    userAddress: userInfo.userAddress,
+    userAccount: userInfo.userAccount,
+    landlordName: userInfo.landlordName,
+    landlordAddress: userInfo.landlordAddress,
+    contractStart: userInfo.contractStart,
+    contractEnd: userInfo.contractEnd,
+  };
 
   // 집주인에게 보낼 문자 틀 (항상 한국어)
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
@@ -1289,6 +1348,11 @@ function StitchResultA({
           <span style={{ fontSize: '28px' }}>💰</span>
         </div>
 
+        {/* ── 3.5 내용증명서 미리보기 (맛보기) ── */}
+        <div className="mb-5">
+          <PdfPreviewCard data={previewData} />
+        </div>
+
         {/* ── 4. PRIMARY CTA ── */}
         <button
           onClick={() => {
@@ -1423,7 +1487,7 @@ function StitchResultA({
 
 // ── 앱 타입 ───────────────────────────────────────────────────
 
-type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT' | 'CHECKOUT' | 'RESULT_A' | 'CALCULATOR';
+type AppStep = 'HOME' | 'SENDING' | 'SENT' | 'INPUT' | 'RESULT' | 'CHECKOUT' | 'RESULT_A' | 'CALCULATOR' | 'INFO';
 
 interface UserInfo {
   apartmentName: string;
@@ -1431,10 +1495,121 @@ interface UserInfo {
   monthlyAmount: string;
   userName: string;
   userAddress: string;
+  userAccount: string;
   landlordName: string;
   landlordAddress: string;
   contractStart: string;
   contractEnd: string;
+}
+
+// ── 내용증명서 정보 입력 단계 (계산 → 정보입력 → 결과/미리보기 순서) ──
+
+function InfoInputStep({
+  userInfo,
+  onChange,
+  refundTotal,
+  onNext,
+  onBack,
+}: {
+  userInfo: UserInfo;
+  onChange: (field: keyof UserInfo, value: string) => void;
+  refundTotal: number;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const { lang, tx } = useLanguage();
+  const tc = tx.checkout;
+  const fm = (n: number) => lang === 'ko' ? `${n.toLocaleString('ko-KR')}원` : `₩${n.toLocaleString()}`;
+  const isComplete = userInfo.userName.trim() !== '' && userInfo.landlordAddress.trim() !== '';
+
+  return (
+    <div className="min-h-screen antialiased" style={{ backgroundColor: '#FDFCFB', color: '#191c1d' }}>
+      <header
+        className="flex items-center justify-between px-5 md:px-10 h-16 w-full sticky top-0 z-10"
+        style={{ backgroundColor: '#FDFCFB', borderBottom: '1px solid #e1e3e4' }}
+      >
+        <button onClick={onBack} className="p-2 rounded-full hover:opacity-70" style={{ color: '#0001bb' }}>
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 className="font-bold" style={{ fontSize: '18px', letterSpacing: '-0.01em', color: '#0001bb' }}>{tx.brand}</h1>
+        <LangToggle />
+      </header>
+
+      <main className="px-5 pb-32 mx-auto" style={{ maxWidth: '520px' }}>
+
+        {/* 환급금 미니 배너 */}
+        <div
+          className="flex items-center justify-between px-5 py-4 mt-5 mb-6"
+          style={{ background: 'linear-gradient(135deg,#0001bb,#0000ee)', borderRadius: '16px', color: '#fff' }}
+        >
+          <div>
+            <p style={{ fontSize: '11px', opacity: 0.75, marginBottom: '3px' }}>{tc.refundBannerLabel}</p>
+            <p style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.03em' }}>{fm(refundTotal)}</p>
+          </div>
+          <span style={{ fontSize: '28px' }}>📋</span>
+        </div>
+
+        <div className="mb-6">
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#191c1d', marginBottom: '4px' }}>{tc.infoStepTitle}</h2>
+          <p style={{ fontSize: '13px', color: '#757589' }}>{tc.infoStepSub}</p>
+        </div>
+
+        <SectionHead label={tc.myInfoTitle} />
+        <Field label={tc.myNameLabel} hint={tc.myNameHint} required>
+          <Input value={userInfo.userName} onChange={v => onChange('userName', v)} placeholder={tc.myNamePh} />
+        </Field>
+        <Field label={tc.myAddrLabel} hint={tc.myAddrHint}>
+          <Input value={userInfo.userAddress} onChange={v => onChange('userAddress', v)} placeholder={tc.myAddrPh} />
+        </Field>
+        <Field label={tc.myAccountLabel} hint={tc.myAccountHint}>
+          <Input value={userInfo.userAccount} onChange={v => onChange('userAccount', v)} placeholder={tc.myAccountPh} />
+        </Field>
+
+        <SectionHead label={tc.llInfoTitle} />
+        <Field label={tc.llNameLabel} hint={tc.llNameHint}>
+          <Input value={userInfo.landlordName} onChange={v => onChange('landlordName', v)} placeholder={tc.llNamePh} />
+        </Field>
+        <Field label={tc.llAddrLabel} hint={tc.llAddrHint} required warn={tc.llAddrWarn}>
+          <Input value={userInfo.landlordAddress} onChange={v => onChange('landlordAddress', v)} placeholder={tc.llAddrPh} />
+        </Field>
+
+        <SectionHead label={tc.aptInfoTitle} />
+        <Field label={tc.aptNameLabel}>
+          <Input value={userInfo.apartmentName} onChange={v => onChange('apartmentName', v)} placeholder={tc.aptNamePh} />
+        </Field>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <Field label={tc.startDateLabel}>
+            <Input value={userInfo.contractStart} onChange={v => onChange('contractStart', v)} placeholder={tc.startDatePh} />
+          </Field>
+          <Field label={tc.endDateLabel}>
+            <Input value={userInfo.contractEnd} onChange={v => onChange('contractEnd', v)} placeholder={tc.endDatePh} />
+          </Field>
+        </div>
+
+        <div style={{ background: '#f0f4ff', borderRadius: '10px', padding: '12px 14px', marginTop: '8px', marginBottom: '24px' }}>
+          <p style={{ fontSize: '12px', color: '#0001bb', lineHeight: 1.8, whiteSpace: 'pre-line' }}>{tc.docTip}</p>
+        </div>
+
+        {!isComplete && (
+          <p className="text-center mb-3" style={{ fontSize: '12px', color: '#ba1a1a' }}>{tc.requiredNotice}</p>
+        )}
+
+        <button
+          onClick={() => isComplete && onNext()}
+          disabled={!isComplete}
+          className="w-full flex items-center justify-center gap-2 font-bold transition-all active:scale-95 disabled:opacity-40"
+          style={{
+            background: isComplete ? 'linear-gradient(135deg,#0001bb,#0000ee)' : '#c5c4db',
+            color: '#fff', borderRadius: '16px', fontSize: '16px', padding: '18px 24px',
+            boxShadow: isComplete ? '0 8px 24px rgba(0,0,255,0.3)' : 'none',
+            border: 'none', cursor: isComplete ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {tc.nextBtn}
+        </button>
+      </main>
+    </div>
+  );
 }
 
 // ── 메인 앱 ───────────────────────────────────────────────────
@@ -1450,6 +1625,7 @@ function JangChungGeumApp() {
     monthlyAmount: '',
     userName: '',
     userAddress: '',
+    userAccount: '',
     landlordName: '',
     landlordAddress: '',
     contractStart: '',
@@ -1657,12 +1833,26 @@ function JangChungGeumApp() {
     return (
       <StitchCalculator
         showHero
-        onResult={(data) => { setRefundData(data); setStep('RESULT_A'); }}
+        onResult={(data) => { setRefundData(data); setStep('INFO'); }}
       />
     );
   }
 
-  // Stitch 분석 결과 페이지 (Route A)
+  // 정보 입력 단계 — 결과/결제로 넘어가기 전에 내용증명서에 들어갈 정보를 먼저 받는다
+  if (step === 'INFO') {
+    const rd = refundData ?? { months: 24, monthly: 23000, total: 552000 };
+    return (
+      <InfoInputStep
+        userInfo={userInfo}
+        onChange={(field, value) => setUserInfo(prev => ({ ...prev, [field]: value }))}
+        refundTotal={rd.total}
+        onNext={() => setStep('RESULT_A')}
+        onBack={() => setStep('CALCULATOR')}
+      />
+    );
+  }
+
+  // Stitch 분석 결과 페이지 (Route A) — 입력된 정보로 만든 내용증명 미리보기 포함
   if (step === 'RESULT_A') {
     const rd = refundData ?? { months: 24, monthly: 23000, total: 552000 };
     return (
@@ -1670,13 +1860,27 @@ function JangChungGeumApp() {
         refundTotal={rd.total}
         monthly={rd.monthly}
         months={rd.months}
+        userInfo={userInfo}
         onGoCheckout={() => {
           if (refundData) {
             sessionStorage.setItem('jcg_refund_data', JSON.stringify(refundData));
           }
+          sessionStorage.setItem('jcg_user_data', JSON.stringify({
+            apartmentName: userInfo.apartmentName || '해당 아파트',
+            months: rd.months,
+            monthlyAmount: rd.monthly,
+            refundAmount: rd.total,
+            userName: userInfo.userName || '세입자',
+            userAddress: userInfo.userAddress,
+            userAccount: userInfo.userAccount,
+            landlordName: userInfo.landlordName,
+            landlordAddress: userInfo.landlordAddress,
+            contractStart: userInfo.contractStart,
+            contractEnd: userInfo.contractEnd,
+          }));
           window.location.href = '/checkout';
         }}
-        onBack={() => setStep('CALCULATOR')}
+        onBack={() => setStep('INFO')}
       />
     );
   }

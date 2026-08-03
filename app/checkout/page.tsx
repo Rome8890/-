@@ -6,57 +6,13 @@ import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useLanguage } from '@/lib/i18n/context';
 import { LangToggle } from '@/components/LangToggle';
+import { Field, SectionHead, Input } from '@/components/DocFormFields';
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eon';
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'sb';
 const PRODUCT_ID = 'content_cert';
 
 type PaymentMode = 'toss' | 'paypal';
-
-const baseInput: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', fontSize: '15px',
-  border: '1.5px solid #c5c4db', borderRadius: '10px',
-  outline: 'none', color: '#191c1d', background: '#fafafa', fontFamily: 'inherit',
-};
-
-function Field({ label, hint, required, warn, children }: {
-  label: string; hint?: string; required?: boolean; warn?: string; children: React.ReactNode;
-}) {
-  return (
-    <div style={{ marginBottom: '14px' }}>
-      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#454558', marginBottom: '6px' }}>
-        {label}
-        {required && <span style={{ color: '#ba1a1a', marginLeft: '3px' }}>*</span>}
-        {hint && <span style={{ fontWeight: 400, color: '#9a99b0', marginLeft: '6px', fontSize: '11px' }}>{hint}</span>}
-      </label>
-      {children}
-      {warn && <p style={{ fontSize: '11px', color: '#ba1a1a', marginTop: '4px' }}>{warn}</p>}
-    </div>
-  );
-}
-
-function SectionHead({ label }: { label: string }) {
-  return (
-    <p style={{ fontSize: '11px', fontWeight: 700, color: '#0001bb', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '20px 0 12px' }}>
-      {label}
-    </p>
-  );
-}
-
-function Input({ value, onChange, placeholder, style }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; style?: React.CSSProperties;
-}) {
-  return (
-    <input
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      style={{ ...baseInput, ...style }}
-      onFocus={e => (e.target.style.borderColor = '#0001bb')}
-      onBlur={e => (e.target.style.borderColor = '#c5c4db')}
-    />
-  );
-}
 
 export default function CheckoutPage() {
   const { lang, tx } = useLanguage();
@@ -80,6 +36,22 @@ export default function CheckoutPage() {
     try {
       const raw = sessionStorage.getItem('jcg_refund_data');
       if (raw) setRefundInfo(JSON.parse(raw));
+
+      // 결과 페이지에서 이미 서류 정보를 입력하고 넘어온 경우 자동으로 채워 넣는다
+      const rawUser = sessionStorage.getItem('jcg_user_data');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u.userName) setMyName(u.userName);
+        if (u.userAddress) setMyAddr(u.userAddress);
+        if (u.userAccount) setMyAccount(u.userAccount);
+        if (u.landlordName) setLlName(u.landlordName);
+        if (u.landlordAddress) setLlAddr(u.landlordAddress);
+        if (u.apartmentName) setAptName(u.apartmentName);
+        if (u.contractStart) setContractStart(u.contractStart);
+        if (u.contractEnd) setContractEnd(u.contractEnd);
+        // 필수 항목(성명, 집주인 주소)까지 이미 채워져 있다면 접어서 결제에 집중시킨다
+        if (u.userName && u.landlordAddress) setDocOpen(false);
+      }
     } catch {}
   }, []);
 
