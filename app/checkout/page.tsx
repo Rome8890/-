@@ -11,6 +11,8 @@ import { Field, SectionHead, Input } from '@/components/DocFormFields';
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eon';
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'sb';
 const PRODUCT_ID = 'content_cert';
+// 토스페이먼츠 심사 완료 전까지 결제 탭에서 숨김 — 심사 통과하면 true로 되돌리기
+const SHOW_TOSS_TAB = false;
 
 type PaymentMode = 'payapp' | 'toss' | 'paypal';
 
@@ -276,11 +278,11 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* 결제 탭 */}
+        {/* 결제 탭 — 토스는 심사 완료 전까지 숨김 (SHOW_TOSS_TAB 참고) */}
         <div className="flex gap-2 mb-4 p-1" style={{ background: '#f3f4f5', borderRadius: '12px' }}>
           {([
             { key: 'payapp' as const, label: tc.tabPayapp, icon: <Smartphone size={15} /> },
-            { key: 'toss' as const, label: tc.tabKorean, icon: <CreditCard size={15} /> },
+            ...(SHOW_TOSS_TAB ? [{ key: 'toss' as const, label: tc.tabKorean, icon: <CreditCard size={15} /> }] : []),
             { key: 'paypal' as const, label: tc.tabPaypal, icon: <Globe size={15} /> },
           ]).map(({ key, label, icon }) => (
             <button key={key} onClick={() => setMode(key)}
