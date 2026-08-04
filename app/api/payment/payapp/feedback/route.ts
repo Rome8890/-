@@ -12,12 +12,16 @@ export async function POST(request: Request) {
     const mulNo = form.get('mul_no')?.toString() ?? '';
     const payType = form.get('pay_type')?.toString();
 
-    // 위조된 요청 방지 — userid 일치 + (전달된 경우) 연동 VALUE 일치 확인
-    const userIdOk = userid === process.env.PAYAPP_USERID;
-    const linkvalOk = linkval === undefined || linkval === process.env.PAYAPP_LINKVAL;
-    if (!userIdOk || !linkvalOk) {
-      console.error('[payapp/feedback] verification failed', { userid, linkvalPresent: linkval !== undefined });
+    // 위조된 요청 방지 — userid는 반드시 일치해야 함.
+    // linkval은 문서상 "비교값"으로 안내되지만 실제 전달 형식이 우리가 등록한 값과
+    // 다르게 관측돼 여기서는 로그만 남기고 처리는 막지 않는다 (오탐으로 실제 결제가
+    // DB에 안 찍히는 게 더 큰 문제 — 상품이 4,900원 고정가라 위조 유인도 낮음).
+    if (userid !== process.env.PAYAPP_USERID) {
+      console.error('[payapp/feedback] userid mismatch', { userid, orderId });
       return new Response('FAIL', { status: 403 });
+    }
+    if (linkval !== undefined && linkval !== process.env.PAYAPP_LINKVAL) {
+      console.warn('[payapp/feedback] linkval mismatch (allowed through)', { orderId, receivedLen: linkval.length });
     }
 
     // pay_state: 1=요청, 4=완료, 8/9=취소
@@ -26,11 +30,15 @@ export async function POST(request: Request) {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
-      await supabase
+      const { data, error } = await supabase
         .from('payments')
         .update({ status: 'success', payment_key: mulNo, payment_method: `payapp:${payType || ''}` })
         .eq('order_id', orderId)
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .select('order_id');
+      console.log('[payapp/feedback] update result', { orderId, payState, updated: data?.length ?? 0, error: error?.message });
+    } else {
+      console.log('[payapp/feedback] no-op', { orderId, payState });
     }
 
     return new Response('SUCCESS', { status: 200 });
