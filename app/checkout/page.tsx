@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, FileText, CheckCircle2, CreditCard, Globe, ChevronDown, ChevronUp } from 'lucide-react';
+import { ShieldCheck, FileText, CheckCircle2, CreditCard, Globe, ChevronDown, ChevronUp, Smartphone } from 'lucide-react';
 import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useLanguage } from '@/lib/i18n/context';
@@ -12,14 +12,15 @@ const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_D5Ge
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'sb';
 const PRODUCT_ID = 'content_cert';
 
-type PaymentMode = 'toss' | 'paypal';
+type PaymentMode = 'payapp' | 'toss' | 'paypal';
 
 export default function CheckoutPage() {
   const { lang, tx } = useLanguage();
   const tc = tx.checkout;
-  const [mode, setMode] = useState<PaymentMode>('toss');
+  const [mode, setMode] = useState<PaymentMode>('payapp');
   const [isPaying, setIsPaying] = useState(false);
   const [orderError, setOrderError] = useState('');
+  const [recvPhone, setRecvPhone] = useState('');
   const [refundInfo, setRefundInfo] = useState<{ months: number; monthly: number; total: number } | null>(null);
   const [docOpen, setDocOpen] = useState(true);
 
@@ -105,6 +106,30 @@ export default function CheckoutPage() {
         setOrderError(msg || (lang === 'ko' ? '결제 오류가 발생했습니다.' : 'Payment error. Please try again.'));
       }
     } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const handlePayappPayment = async () => {
+    setOrderError('');
+    const phoneDigits = recvPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 9) {
+      setOrderError(lang === 'ko' ? '휴대폰 번호를 정확히 입력해 주세요.' : 'Please enter a valid phone number.');
+      return;
+    }
+    setIsPaying(true);
+    try {
+      savePdfData();
+      const res = await fetch('/api/payment/payapp/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: PRODUCT_ID, recvphone: phoneDigits }),
+      });
+      const order = await res.json();
+      if (!order.ok) throw new Error(order.error);
+      window.location.href = order.payurl;
+    } catch (e: any) {
+      setOrderError(e?.message || (lang === 'ko' ? '결제 오류가 발생했습니다.' : 'Payment error. Please try again.'));
       setIsPaying(false);
     }
   };
@@ -254,6 +279,7 @@ export default function CheckoutPage() {
         {/* 결제 탭 */}
         <div className="flex gap-2 mb-4 p-1" style={{ background: '#f3f4f5', borderRadius: '12px' }}>
           {([
+            { key: 'payapp' as const, label: tc.tabPayapp, icon: <Smartphone size={15} /> },
             { key: 'toss' as const, label: tc.tabKorean, icon: <CreditCard size={15} /> },
             { key: 'paypal' as const, label: tc.tabPaypal, icon: <Globe size={15} /> },
           ]).map(({ key, label, icon }) => (
@@ -272,6 +298,39 @@ export default function CheckoutPage() {
         {orderError && (
           <div className="px-4 py-3 mb-4" style={{ background: '#ffdad6', borderRadius: '12px' }}>
             <p style={{ fontSize: '13px', color: '#ba1a1a' }}>{orderError}</p>
+          </div>
+        )}
+
+        {mode === 'payapp' && (
+          <div>
+            <div className="px-4 py-3 mb-4" style={{ background: '#f0f0ff', borderRadius: '12px', border: '1px solid #bec2ff' }}>
+              <p style={{ fontSize: '13px', color: '#0001bb' }}>{tc.payappInfo}</p>
+            </div>
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#454558', marginBottom: '6px' }}>
+                {tc.payappPhoneLabel}
+                <span style={{ color: '#ba1a1a', marginLeft: '3px' }}>*</span>
+              </label>
+              <input
+                value={recvPhone}
+                onChange={e => setRecvPhone(e.target.value.replace(/[^\d-]/g, ''))}
+                placeholder={tc.payappPhonePh}
+                style={{
+                  width: '100%', padding: '12px 14px', fontSize: '15px',
+                  border: '1.5px solid #c5c4db', borderRadius: '10px',
+                  outline: 'none', color: '#191c1d', background: '#fafafa', fontFamily: 'inherit',
+                }}
+              />
+            </div>
+            <button onClick={handlePayappPayment} disabled={isPaying}
+              className="w-full flex items-center justify-center gap-2 font-bold transition-all active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg,#0001bb,#0000ee)', color: '#fff',
+                borderRadius: '16px', fontSize: '16px', padding: '18px 24px',
+                boxShadow: '0 8px 24px rgba(0,0,255,0.3)', border: 'none', cursor: isPaying ? 'not-allowed' : 'pointer' }}>
+              <Smartphone size={18} />
+              {isPaying ? tc.payappBtnLoading : tc.payappBtn}
+            </button>
+            <p className="text-center mt-3" style={{ fontSize: '12px', color: '#757589' }}>{tc.payappHint}</p>
           </div>
         )}
 

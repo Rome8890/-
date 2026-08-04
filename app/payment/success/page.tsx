@@ -48,9 +48,9 @@ function SuccessContent() {
       sessionStorage.removeItem('jcg_user_data');
     };
 
-    // PayPal: 서버에서 이미 처리됨 — Toss confirm API 스킵
-    if (paymentKey === 'paypal') {
-      setPaymentMethod('PayPal');
+    // PayPal / 페이앱: 서버(webhook)에서 이미 처리됨 — Toss confirm API 스킵
+    if (paymentKey === 'paypal' || paymentKey === 'payapp') {
+      setPaymentMethod(paymentKey === 'paypal' ? 'PayPal' : '페이앱');
       setStatus('success');
       triggerPDF();
       return;
