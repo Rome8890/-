@@ -63,26 +63,35 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
   const blurEnd = preview ? '</div>' : '';
 
   const previewStyles = preview ? `
-    .preview-blur { filter: blur(3px); user-select: none; pointer-events: none; }
+    .preview-blur { filter: blur(4.5px); user-select: none; pointer-events: none; opacity: 0.6; }
     .unlock-divider {
-      position: relative; z-index: 1;
-      margin: 20px 0 8px;
-      padding-top: 30px;
-      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.92) 55%, #fff 100%);
+      position: relative; z-index: 10;
+      margin: 16px 0 10px;
+      padding: 24px 16px 14px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(240,244,255,0.95) 40%, #f0f4ff 100%);
       text-align: center;
+      border: 1.5px dashed #0001bb;
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0,1,187,0.08);
     }
     .unlock-badge {
-      display: inline-block;
-      background: #111827; color: #fff; padding: 10px 20px; border-radius: 999px;
-      font-size: 12px; font-weight: 700; white-space: nowrap;
-      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      display: inline-flex; items-center; gap: 6px;
+      background: linear-gradient(135deg, #0001bb, #0000ee); color: #fff; padding: 12px 24px; border-radius: 999px;
+      font-size: 13px; font-weight: 800; letter-spacing: -0.01em; white-space: normal;
+      box-shadow: 0 8px 24px rgba(0,1,187,0.3); text-align: center;
+    }
+    .unlock-subtext {
+      font-size: 11px; color: #454558; margin-top: 8px; font-weight: 600;
     }
   ` : '';
 
   // 스크롤해서 끝까지 내려도 "여기부터는 결제 후 공개" 임을 보여주는
-  // 인라인(고정 아님) 구분선 — 실제 미리보기 문서 흐름 안에 자연스럽게 삽입된다.
+  // 인라인 구분선 — 실제 미리보기 문서 흐름 안에 자연스럽게 삽입된다.
   const unlockDivider = preview
-    ? `<div class="unlock-divider"><span class="unlock-badge">🔒 결제 후 반환 계좌 · 서명란 · 전체 내용증명 확인 가능</span></div>`
+    ? `<div class="unlock-divider">
+        <div class="unlock-badge">🔒 [결제 후 즉시 다운로드] 집주인 7일 이내 반환독촉 조항 + 소액심판/강제집행 예고문 + 우체국 제출용 완본 PDF</div>
+        <p class="unlock-subtext">✨ 결제 시 위 내용과 계좌번호 및 날인(印)이 완성된 정식 내용증명서 PDF가 10초 만에 발급됩니다.</p>
+       </div>`
     : '';
 
   const printSection = preview ? '' : `
