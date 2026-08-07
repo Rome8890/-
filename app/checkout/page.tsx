@@ -14,12 +14,12 @@ const PRODUCT_ID = 'content_cert';
 // 토스페이먼츠 심사 완료 전까지 결제 탭에서 숨김 — 심사 통과하면 true로 되돌리기
 const SHOW_TOSS_TAB = false;
 
-type PaymentMode = 'payapp' | 'toss' | 'paypal';
+type PaymentMode = 'portone' | 'payapp' | 'toss' | 'paypal';
 
 export default function CheckoutPage() {
   const { lang, tx } = useLanguage();
   const tc = tx.checkout;
-  const [mode, setMode] = useState<PaymentMode>('payapp');
+  const [mode, setMode] = useState<PaymentMode>('portone');
   const [isPaying, setIsPaying] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [recvPhone, setRecvPhone] = useState('');
@@ -42,7 +42,6 @@ export default function CheckoutPage() {
       const raw = sessionStorage.getItem('jcg_refund_data');
       if (raw) setRefundInfo(JSON.parse(raw));
 
-      // 결과 페이지에서 이미 서류 정보를 입력하고 넘어온 경우 자동으로 채워 넣는다
       const rawUser = sessionStorage.getItem('jcg_user_data');
       if (rawUser) {
         const u = JSON.parse(rawUser);
@@ -54,7 +53,6 @@ export default function CheckoutPage() {
         if (u.apartmentName) setAptName(u.apartmentName);
         if (u.contractStart) setContractStart(u.contractStart);
         if (u.contractEnd) setContractEnd(u.contractEnd);
-        // 필수 항목(성명, 집주인 주소)까지 이미 채워져 있다면 접어서 결제에 집중시킨다
         if (u.userName && u.landlordAddress) setDocOpen(false);
       }
     } catch {}
@@ -79,6 +77,76 @@ export default function CheckoutPage() {
       contractStart,
       contractEnd,
     }));
+  };
+
+  const handlePortonePayment = async () => {
+    setOrderError('');
+    if (!privacyAgreed) {
+      setOrderError(lang === 'ko' ? '개인정보 수집 및 이용에 동의해 주세요.' : 'Please agree to the Collection and Use of Personal Information.');
+      return;
+    }
+    setIsPaying(true);
+    try {
+      savePdfData();
+      const phoneDigits = recvPhone.replace(/\D/g, '');
+      const res = await fetch('/api/payment/portone/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: PRODUCT_ID,
+          userContact: phoneDigits || recvPhone,
+          buildingName: aptName,
+          privacyAgreed,
+        }),
+      });
+      const order = await res.json();
+      if (!order.ok) throw new Error(order.error);
+
+      const loadIamport = () => {
+        return new Promise<void>((resolve, reject) => {
+          if ((window as any).IMP) return resolve();
+          const script = document.createElement('script');
+          script.src = 'https://cdn.iamport.kr/v1/iamport.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('PortOne SDK 로드 실패'));
+          document.head.appendChild(script);
+        });
+      };
+
+      await loadIamport();
+      const IMP = (window as any).IMP;
+      const storeCode = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'imp00000000';
+      IMP.init(storeCode);
+
+      IMP.request_pay(
+        {
+          pg: 'kakaopay.TC0ONETIME',
+          pay_method: 'card',
+          merchant_uid: order.orderId,
+          name: order.orderName,
+          amount: order.amount,
+          buyer_name: myName || (lang === 'ko' ? '세입자' : 'Tenant'),
+          buyer_tel: phoneDigits || '010-0000-0000',
+          m_redirect_url: `${window.location.origin}/payment/success?paymentKey=portone&orderId=${order.orderId}&amount=${order.amount}`,
+        },
+        async (rsp: any) => {
+          if (rsp.success) {
+            await fetch('/api/payment/portone/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imp_uid: rsp.imp_uid, merchant_uid: rsp.merchant_uid }),
+            });
+            window.location.href = `/payment/success?paymentKey=${rsp.imp_uid || 'portone'}&orderId=${rsp.merchant_uid}&amount=${order.amount}`;
+          } else {
+            setIsPaying(false);
+            setOrderError(rsp.error_msg || '결제가 취소되었습니다.');
+          }
+        }
+      );
+    } catch (e: any) {
+      setOrderError(e?.message || (lang === 'ko' ? '결제 오류가 발생했습니다.' : 'Payment error. Please try again.'));
+      setIsPaying(false);
+    }
   };
 
   const handleTossPayment = async () => {
@@ -299,16 +367,17 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* 결제 탭 — 토스는 심사 완료 전까지 숨김 (SHOW_TOSS_TAB 참고) */}
+        {/* 결제 탭 */}
         <div className="flex gap-2 mb-4 p-1" style={{ background: '#f3f4f5', borderRadius: '12px' }}>
           {([
+            { key: 'portone' as const, label: tc.tabPortone || '💛 카카오페이 / 포트원', icon: <CreditCard size={15} /> },
             { key: 'payapp' as const, label: tc.tabPayapp, icon: <Smartphone size={15} /> },
             ...(SHOW_TOSS_TAB ? [{ key: 'toss' as const, label: tc.tabKorean, icon: <CreditCard size={15} /> }] : []),
             { key: 'paypal' as const, label: tc.tabPaypal, icon: <Globe size={15} /> },
           ]).map(({ key, label, icon }) => (
             <button key={key} onClick={() => setMode(key)}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 font-semibold transition-all"
-              style={{ fontSize: '13px', borderRadius: '10px',
+              style={{ fontSize: '12px', borderRadius: '10px',
                 background: mode === key ? '#fff' : 'transparent',
                 color: mode === key ? '#0001bb' : '#757589',
                 boxShadow: mode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
@@ -359,6 +428,27 @@ export default function CheckoutPage() {
         {orderError && (
           <div className="px-4 py-3 mb-4" style={{ background: '#ffdad6', borderRadius: '12px' }}>
             <p style={{ fontSize: '13px', color: '#ba1a1a' }}>{orderError}</p>
+          </div>
+        )}
+
+        {mode === 'portone' && (
+          <div>
+            <div className="px-4 py-3 mb-4" style={{ background: '#fffbe6', borderRadius: '12px', border: '1px solid #ffe58f' }}>
+              <p style={{ fontSize: '13px', color: '#873800', fontWeight: 600 }}>
+                {tc.portoneInfo || '카카오페이, 네이버페이, 신용카드, 계좌이체 등 간편하게 안전결제 됩니다.'}
+              </p>
+            </div>
+            <button onClick={handlePortonePayment} disabled={isPaying}
+              className="w-full flex items-center justify-center gap-2 font-bold transition-all active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg,#fee500,#fada00)', color: '#000000',
+                borderRadius: '16px', fontSize: '16px', padding: '18px 24px',
+                boxShadow: '0 8px 24px rgba(254,229,0,0.4)', border: 'none', cursor: isPaying ? 'not-allowed' : 'pointer' }}>
+              <CreditCard size={18} />
+              {isPaying ? tc.portoneBtnLoading : (tc.portoneBtn || '4,900원 결제하기')}
+            </button>
+            <p className="text-center mt-3" style={{ fontSize: '12px', color: '#757589' }}>
+              {tc.portoneHint || '카카오페이 · 네이버페이 · 신용카드 · 휴대폰 소액결제 지원'}
+            </p>
           </div>
         )}
 
@@ -481,6 +571,24 @@ export default function CheckoutPage() {
           </div>
         )}
 
+        {/* 법적 사업자 정보 푸터 (전자상거래법 & PG 심사 필수 준수) */}
+        <footer className="mt-12 pt-8 pb-10 border-t border-gray-200 text-center text-xs text-gray-500 space-y-2">
+          <div className="font-bold text-gray-800">장충금헌터 (Jang-chung-geum Hunter)</div>
+          <div>대표자: 이진영 | 사업자등록번호: 361-70-00626</div>
+          <div>사업장 주소: 대구광역시 북구 고성로 172-1, 505호(고성동2가, 삼부빌)</div>
+          <div>통신판매업신고: 전자상거래 소매업 | 이메일: info@bororefund.com</div>
+          <div className="text-[11px] text-gray-400 mt-2">
+            ※ 본 서비스는 전자적 서식 작성 자동화 소프트웨어이며, 법률 자문이나 법률 대리를 제공하지 않습니다.
+          </div>
+          <div className="flex items-center justify-center gap-4 text-[11px] font-medium text-gray-600 mt-3">
+            <button type="button" onClick={() => setShowPrivacyModal(true)} className="hover:underline">개인정보처리방침</button>
+            <span>·</span>
+            <button type="button" onClick={() => setShowPrivacyModal(true)} className="hover:underline">이용약관</button>
+            <span>·</span>
+            <button type="button" onClick={() => setShowPrivacyModal(true)} className="hover:underline">환불규정</button>
+          </div>
+        </footer>
+
         <div className="flex items-center justify-center gap-2 mt-5" style={{ color: '#c5c4db' }}>
           <ShieldCheck size={14} />
           <span style={{ fontSize: '12px' }}>{tc.security}</span>
@@ -489,3 +597,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
