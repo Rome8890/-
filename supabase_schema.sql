@@ -28,9 +28,13 @@ CREATE TABLE payments (
     order_id TEXT UNIQUE,
     payment_key TEXT,
     user_id UUID,
+    user_contact TEXT, -- 구매자 전화번호
+    user_email TEXT, -- 구매자 이메일
+    building_name TEXT, -- 대상 아파트/오피스텔명
     amount INTEGER NOT NULL,
     status TEXT DEFAULT 'pending', -- pending, success, failed
     payment_method TEXT,
+    privacy_agreed BOOLEAN DEFAULT true, -- 개인정보 처리방침 동의 여부
     document_url TEXT -- 생성된 PDF 링크
 );
 
@@ -47,6 +51,10 @@ CREATE POLICY "Anyone can insert payments" ON payments FOR INSERT WITH CHECK (tr
 -- ⚠️ 기존 테이블이 이미 생성된 경우 아래 마이그레이션 실행:
 -- ALTER TABLE payments ADD COLUMN IF NOT EXISTS order_id TEXT UNIQUE;
 -- ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_key TEXT;
+-- ALTER TABLE payments ADD COLUMN IF NOT EXISTS user_contact TEXT;
+-- ALTER TABLE payments ADD COLUMN IF NOT EXISTS user_email TEXT;
+-- ALTER TABLE payments ADD COLUMN IF NOT EXISTS building_name TEXT;
+-- ALTER TABLE payments ADD COLUMN IF NOT EXISTS privacy_agreed BOOLEAN DEFAULT true;
 
 -- 4. 지식인 답변 동적 관리 테이블 (신규)
 CREATE TABLE IF NOT EXISTS jisikin_answers (

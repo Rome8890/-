@@ -21,21 +21,20 @@ export type TrackingEvent =
 
 /**
  * 행동 로그 저장 함수
+ * 클라이언트는 자신의 IP를 알 수 없으므로 /api/track 서버 라우트를 거쳐서 기록한다.
+ * (서버에서 x-forwarded-for / Vercel 지오 헤더를 읽어 metadata에 ip·country·city를 채워 넣음)
  */
 export const logEvent = async (event: TrackingEvent, metadata: any = {}) => {
   try {
-    const { data, error } = await supabase
-      .from('tracking_events')
-      .insert([
-        { 
-          event_type: event, 
-          metadata: metadata,
-          user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-          path: typeof window !== 'undefined' ? window.location.pathname : '/'
-        }
-      ]);
-    
-    if (error) throw error;
+    await fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event,
+        metadata,
+        path: typeof window !== 'undefined' ? window.location.pathname : '/',
+      }),
+    });
   } catch (err) {
     console.error('Tracking Error:', err);
   }

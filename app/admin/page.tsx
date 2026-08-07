@@ -210,7 +210,7 @@ export default function AdminPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
-                    {['시간', '이벤트', '언어', '환급액', '세션 ID', '기기', '유입경로'].map(h => (
+                    {['시간', '이벤트', '언어', '환급액', 'IP', '지역', '세션 ID', '기기', '유입경로'].map(h => (
                       <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: '#6b7280', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -244,6 +244,12 @@ export default function AdminPage() {
                         </td>
                         <td style={{ padding: '10px 16px', fontWeight: 600, color: isPayment || isSuccess ? '#0001bb' : '#374151', whiteSpace: 'nowrap' }}>
                           {fmtKrw(ev.metadata?.refund_total)}
+                        </td>
+                        <td style={{ padding: '10px 16px', fontFamily: 'monospace', fontSize: '11px', color: '#374151', whiteSpace: 'nowrap' }}>
+                          {ev.metadata?.ip || '-'}
+                        </td>
+                        <td style={{ padding: '10px 16px', fontSize: '12px', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                          {[ev.metadata?.city, ev.metadata?.region, ev.metadata?.country].filter(Boolean).join(', ') || '-'}
                         </td>
                         <td style={{ padding: '10px 16px', fontFamily: 'monospace', fontSize: '11px', color: '#9ca3af' }}>
                           {ev.metadata?.session_id ? ev.metadata.session_id.slice(0, 10) + '…' : '-'}

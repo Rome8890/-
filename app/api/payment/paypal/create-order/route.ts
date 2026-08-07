@@ -24,7 +24,7 @@ async function getPayPalToken(): Promise<string> {
 
 export async function POST(request: Request) {
   try {
-    const { productId } = await request.json();
+    const { productId, userContact, userEmail, buildingName, privacyAgreed } = await request.json();
 
     const product = PRODUCTS[productId];
     if (!product) {
@@ -56,16 +56,24 @@ export async function POST(request: Request) {
     }
 
     // Supabase에 pending 기록
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    await supabase.from('payments').insert({
-      order_id: orderData.id,
-      amount: Math.round(parseFloat(product.amountUSD) * 1000),
-      status: 'pending',
-      payment_method: 'paypal',
-    });
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      await supabase.from('payments').insert({
+        order_id: orderData.id,
+        amount: Math.round(parseFloat(product.amountUSD) * 1000),
+        status: 'pending',
+        payment_method: 'paypal',
+        user_contact: userContact || null,
+        user_email: userEmail || null,
+        building_name: buildingName || null,
+        privacy_agreed: privacyAgreed !== undefined ? Boolean(privacyAgreed) : true,
+      });
+    } catch (dbErr) {
+      console.warn('[paypal/create-order] Supabase insert failed:', dbErr);
+    }
 
     return NextResponse.json({ ok: true, paypalOrderId: orderData.id });
   } catch (error: any) {

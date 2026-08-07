@@ -23,6 +23,8 @@ export default function CheckoutPage() {
   const [isPaying, setIsPaying] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [recvPhone, setRecvPhone] = useState('');
+  const [privacyAgreed, setPrivacyAgreed] = useState(true);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [refundInfo, setRefundInfo] = useState<{ months: number; monthly: number; total: number } | null>(null);
   const [docOpen, setDocOpen] = useState(true);
 
@@ -80,13 +82,23 @@ export default function CheckoutPage() {
   };
 
   const handleTossPayment = async () => {
-    setIsPaying(true);
     setOrderError('');
+    if (!privacyAgreed) {
+      setOrderError(lang === 'ko' ? '개인정보 수집 및 이용에 동의해 주세요.' : 'Please agree to the Collection and Use of Personal Information.');
+      return;
+    }
+    setIsPaying(true);
     try {
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: PRODUCT_ID, customerName: myName }),
+        body: JSON.stringify({
+          productId: PRODUCT_ID,
+          customerName: myName,
+          userContact: recvPhone,
+          buildingName: aptName,
+          privacyAgreed,
+        }),
       });
       const order = await res.json();
       if (!order.ok) throw new Error(order.error);
@@ -114,6 +126,10 @@ export default function CheckoutPage() {
 
   const handlePayappPayment = async () => {
     setOrderError('');
+    if (!privacyAgreed) {
+      setOrderError(lang === 'ko' ? '개인정보 수집 및 이용에 동의해 주세요.' : 'Please agree to the Collection and Use of Personal Information.');
+      return;
+    }
     const phoneDigits = recvPhone.replace(/\D/g, '');
     if (phoneDigits.length < 9) {
       setOrderError(lang === 'ko' ? '휴대폰 번호를 정확히 입력해 주세요.' : 'Please enter a valid phone number.');
@@ -125,7 +141,12 @@ export default function CheckoutPage() {
       const res = await fetch('/api/payment/payapp/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: PRODUCT_ID, recvphone: phoneDigits }),
+        body: JSON.stringify({
+          productId: PRODUCT_ID,
+          recvphone: phoneDigits,
+          buildingName: aptName,
+          privacyAgreed,
+        }),
       });
       const order = await res.json();
       if (!order.ok) throw new Error(order.error);
@@ -297,6 +318,44 @@ export default function CheckoutPage() {
           ))}
         </div>
 
+        {/* 개인정보 수집 및 이용 동의 (한국 개인정보보호법 준수) */}
+        <div className="mb-4 p-3.5" style={{ background: '#f8f9ff', borderRadius: '12px', border: '1px solid #e1e3e4' }}>
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={privacyAgreed}
+              onChange={(e) => setPrivacyAgreed(e.target.checked)}
+              style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: '#0001bb', cursor: 'pointer' }}
+            />
+            <div style={{ fontSize: '12px', lineHeight: 1.5, color: '#454558' }}>
+              <span style={{ fontWeight: 700, color: '#0001bb' }}>[필수/Required]</span>{' '}
+              {lang === 'ko' ? (
+                <>
+                  개인정보 수집 및 이용에 동의합니다.{' '}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}
+                    style={{ color: '#0001bb', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, fontSize: '12px', cursor: 'pointer' }}
+                  >
+                    [전문 보기]
+                  </button>
+                </>
+              ) : (
+                <>
+                  I agree to the Collection and Use of Personal Information for generating the legal document.{' '}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}
+                    style={{ color: '#0001bb', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, fontSize: '12px', cursor: 'pointer' }}
+                  >
+                    [View Terms]
+                  </button>
+                </>
+              )}
+            </div>
+          </label>
+        </div>
+
         {orderError && (
           <div className="px-4 py-3 mb-4" style={{ background: '#ffdad6', borderRadius: '12px' }}>
             <p style={{ fontSize: '13px', color: '#ba1a1a' }}>{orderError}</p>
@@ -361,11 +420,20 @@ export default function CheckoutPage() {
               <PayPalButtons
                 style={{ layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay' }}
                 createOrder={async () => {
+                  if (!privacyAgreed) {
+                    setOrderError(lang === 'ko' ? '개인정보 수집 및 이용에 동의해 주세요.' : 'Please agree to the Collection and Use of Personal Information.');
+                    throw new Error('Privacy consent required');
+                  }
                   savePdfData();
                   const res = await fetch('/api/payment/paypal/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productId: PRODUCT_ID }),
+                    body: JSON.stringify({
+                      productId: PRODUCT_ID,
+                      userContact: recvPhone,
+                      buildingName: aptName,
+                      privacyAgreed,
+                    }),
                   });
                   const data = await res.json();
                   if (!data.ok) throw new Error(data.error);
@@ -387,6 +455,29 @@ export default function CheckoutPage() {
                 onError={() => setOrderError('PayPal error occurred. Please try again.')}
               />
             </PayPalScriptProvider>
+          </div>
+        )}
+
+        {/* 개인정보 처리방침 전문 모달 */}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl overflow-y-auto max-h-[80vh]">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">
+                {lang === 'ko' ? '개인정보 수집 및 이용 동의' : 'Privacy Collection & Usage Policy'}
+              </h3>
+              <div className="text-xs text-gray-600 space-y-2 leading-relaxed">
+                <p><strong>1. 수집하는 개인정보 항목:</strong> 성명, 연락처(휴대폰 번호), 주소, 거주 부동산 정보(아파트/오피스텔명), 결제 기록</p>
+                <p><strong>2. 개인정보의 수집 및 이용 목적:</strong> 장기수선충당금 반환 청구용 내용증명 PDF 문서 생성, 결제 확인 및 CS 응대, 법적 증거 자료 보존</p>
+                <p><strong>3. 개인정보의 보유 및 이용 기간:</strong> 전자상거래 등에서의 소비자보호에 관한 법률 등 관련 법령에 따라 결제 및 이행 완료 후 5년간 보관 후 파기합니다.</p>
+                <p><strong>4. 동의 거부 권리:</strong> 이용자는 개인정보 수집 동의를 거부할 권리가 있으나, 거부 시 내용증명 서류 생성 및 서비스 이용이 제한됩니다.</p>
+              </div>
+              <button
+                onClick={() => setShowPrivacyModal(false)}
+                className="mt-5 w-full py-2.5 bg-[#0001bb] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+              >
+                {lang === 'ko' ? '동의하고 닫기' : 'Agree & Close'}
+              </button>
+            </div>
           </div>
         )}
 

@@ -61,6 +61,7 @@ export async function POST(request: Request) {
 
     // Supabase 저장 실패해도 결제는 계속 진행 (장애 내성) — 다른 결제수단 라우트와 동일 패턴
     try {
+      const { userEmail, buildingName, privacyAgreed } = await request.clone().json().catch(() => ({}));
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -70,6 +71,10 @@ export async function POST(request: Request) {
         amount: product.amount,
         status: 'pending',
         payment_method: 'payapp',
+        user_contact: phoneDigits,
+        user_email: userEmail || null,
+        building_name: buildingName || null,
+        privacy_agreed: privacyAgreed !== undefined ? Boolean(privacyAgreed) : true,
       });
     } catch (dbErr) {
       console.warn('[payapp/create-order] Supabase unavailable, proceeding without DB record:', dbErr);

@@ -8,7 +8,7 @@ const PRODUCTS: Record<string, { name: string; amount: number }> = {
 
 export async function POST(request: Request) {
   try {
-    const { productId } = await request.json();
+    const { productId, userContact, userEmail, buildingName, privacyAgreed } = await request.json();
 
     const product = PRODUCTS[productId];
     if (!product) {
@@ -28,6 +28,10 @@ export async function POST(request: Request) {
         amount: product.amount,
         status: 'pending',
         payment_method: null,
+        user_contact: userContact || null,
+        user_email: userEmail || null,
+        building_name: buildingName || null,
+        privacy_agreed: privacyAgreed !== undefined ? Boolean(privacyAgreed) : true,
       });
     } catch (dbErr) {
       // Supabase 장애 시 로그만 남기고 결제 계속 진행
