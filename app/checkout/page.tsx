@@ -371,13 +371,12 @@ export default function CheckoutPage() {
         <div className="flex gap-2 mb-4 p-1" style={{ background: '#f3f4f5', borderRadius: '12px' }}>
           {([
             { key: 'portone' as const, label: tc.tabPortone || '💛 카카오페이 / 포트원', icon: <CreditCard size={15} /> },
-            { key: 'payapp' as const, label: tc.tabPayapp, icon: <Smartphone size={15} /> },
             ...(SHOW_TOSS_TAB ? [{ key: 'toss' as const, label: tc.tabKorean, icon: <CreditCard size={15} /> }] : []),
             { key: 'paypal' as const, label: tc.tabPaypal, icon: <Globe size={15} /> },
           ]).map(({ key, label, icon }) => (
             <button key={key} onClick={() => setMode(key)}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 font-semibold transition-all"
-              style={{ fontSize: '12px', borderRadius: '10px',
+              style={{ fontSize: '13px', borderRadius: '10px',
                 background: mode === key ? '#fff' : 'transparent',
                 color: mode === key ? '#0001bb' : '#757589',
                 boxShadow: mode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
@@ -449,39 +448,6 @@ export default function CheckoutPage() {
             <p className="text-center mt-3" style={{ fontSize: '12px', color: '#757589' }}>
               {tc.portoneHint || '카카오페이 · 네이버페이 · 신용카드 · 휴대폰 소액결제 지원'}
             </p>
-          </div>
-        )}
-
-        {mode === 'payapp' && (
-          <div>
-            <div className="px-4 py-3 mb-4" style={{ background: '#f0f0ff', borderRadius: '12px', border: '1px solid #bec2ff' }}>
-              <p style={{ fontSize: '13px', color: '#0001bb' }}>{tc.payappInfo}</p>
-            </div>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#454558', marginBottom: '6px' }}>
-                {tc.payappPhoneLabel}
-                <span style={{ color: '#ba1a1a', marginLeft: '3px' }}>*</span>
-              </label>
-              <input
-                value={recvPhone}
-                onChange={e => setRecvPhone(e.target.value.replace(/[^\d-]/g, ''))}
-                placeholder={tc.payappPhonePh}
-                style={{
-                  width: '100%', padding: '12px 14px', fontSize: '15px',
-                  border: '1.5px solid #c5c4db', borderRadius: '10px',
-                  outline: 'none', color: '#191c1d', background: '#fafafa', fontFamily: 'inherit',
-                }}
-              />
-            </div>
-            <button onClick={handlePayappPayment} disabled={isPaying}
-              className="w-full flex items-center justify-center gap-2 font-bold transition-all active:scale-95 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg,#0001bb,#0000ee)', color: '#fff',
-                borderRadius: '16px', fontSize: '16px', padding: '18px 24px',
-                boxShadow: '0 8px 24px rgba(0,0,255,0.3)', border: 'none', cursor: isPaying ? 'not-allowed' : 'pointer' }}>
-              <Smartphone size={18} />
-              {isPaying ? tc.payappBtnLoading : tc.payappBtn}
-            </button>
-            <p className="text-center mt-3" style={{ fontSize: '12px', color: '#757589' }}>{tc.payappHint}</p>
           </div>
         )}
 
