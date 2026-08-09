@@ -109,17 +109,24 @@ const buildCertHTML = (data: PDFData, preview: boolean) => {
   <title>장기수선충당금 반환 청구 내용증명</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet">
   <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm 15mm 15mm 15mm;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { position: relative; }
+    html, body { position: relative; width: 100%; }
     body {
-      font-family: 'Noto Sans KR', '맑은 고딕', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
       font-size: 13px;
       line-height: 1.8;
       color: #111;
       background-color: #fff;
       background-image: url('${watermarkDataUri}');
       background-repeat: repeat;
-      padding: 34px 56px 44px;
+      padding: 24px 32px 32px;
+      -webkit-font-smoothing: antialiased;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
     .doc-control-row {
       display: flex; align-items: center; justify-content: space-between;
@@ -526,15 +533,45 @@ export const generateKoreanPDF = (data: PDFData) => {
   const printBtn = document.createElement('button');
   printBtn.innerHTML = '🖨️ PDF로 저장 / 인쇄';
   printBtn.style.cssText = 'background:#00A3FF;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;';
-  printBtn.onclick = () => iframe.contentWindow?.print();
+  
+  const safePrint = () => {
+    try {
+      const win = iframe.contentWindow;
+      if (win) {
+        if (win.document && win.document.fonts) {
+          win.document.fonts.ready.then(() => win.print());
+        } else {
+          win.print();
+        }
+      }
+    } catch {
+      window.print();
+    }
+  };
+  printBtn.onclick = safePrint;
+
+  const downloadHtmlBtn = document.createElement('button');
+  downloadHtmlBtn.innerHTML = '📥 문서 파일 직접 다운로드';
+  downloadHtmlBtn.style.cssText = 'background:#10B981;color:white;border:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-left:8px;';
+  downloadHtmlBtn.onclick = () => {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `장충금_내용증명서_${data.userName || '세입자'}.html`;
+    link.click();
+  };
 
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '✕ 닫기';
   closeBtn.style.cssText = 'background:#555;color:white;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-left:12px;';
   closeBtn.onclick = () => overlay.remove();
 
-  toolbar.appendChild(printBtn);
-  toolbar.appendChild(closeBtn);
+  const btnGroup = document.createElement('div');
+  btnGroup.appendChild(printBtn);
+  btnGroup.appendChild(downloadHtmlBtn);
+  btnGroup.appendChild(closeBtn);
+
+  toolbar.appendChild(btnGroup);
 
   const iframe = document.createElement('iframe');
   iframe.style.cssText = 'flex:1;width:100%;border:none;';
@@ -548,6 +585,11 @@ export const generateKoreanPDF = (data: PDFData) => {
     doc.open();
     doc.write(html);
     doc.close();
+
+    // Auto trigger print after font readiness
+    setTimeout(() => {
+      safePrint();
+    }, 500);
   }
 };
 
