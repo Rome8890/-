@@ -2299,10 +2299,18 @@ function JangChungGeumApp() {
 
               {/* 푸터: PG 심사 및 전자상거래법 준수 사업자 정보 */}
               <footer className="mt-12 pt-8 pb-10 border-t border-gray-200 text-center text-xs text-gray-500 space-y-2">
-                <div className="font-bold text-gray-800">장충금헌터 (Jang-chung-geum Hunter)</div>
+                <div className="font-bold text-gray-800 text-sm">장충금헌터 (Jang-chung-geum Hunter)</div>
+                <div>서비스 상품: 장충금 내용증명서 서식 자동 생성 | 상품 가격: 4,900원 (VAT 포함)</div>
                 <div>대표자: 이진영 | 사업자등록번호: 361-70-00626</div>
                 <div>사업장 주소: 대구광역시 북구 고성로 172-1, 505호(고성동2가, 삼부빌)</div>
                 <div>통신판매업신고: 전자상거래 소매업 | 이메일: info@bororefund.com</div>
+                <div className="pt-2 flex items-center justify-center gap-3 font-semibold text-gray-600">
+                  <a href="/terms" className="hover:underline">이용약관</a>
+                  <span>|</span>
+                  <a href="/privacy" className="hover:underline">개인정보처리방침</a>
+                  <span>|</span>
+                  <a href="/terms#refund" className="hover:underline">환불정책</a>
+                </div>
                 <div className="text-[11px] text-gray-400 mt-2">
                   ※ 본 서비스는 전자적 서식 작성 자동화 소프트웨어이며, 법률 자문이나 법률 대리를 제공하지 않습니다.
                 </div>
