@@ -19,6 +19,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Language>('ko');
 
   useEffect(() => {
+    // 1. URL Parameter Check (?lang=en)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlLang = params.get('lang') as Language;
+      if (urlLang === 'en' || urlLang === 'ko') {
+        setLangState(urlLang);
+        localStorage.setItem('boro_lang', urlLang);
+        return;
+      }
+    }
+
     const saved = localStorage.getItem('boro_lang') as Language;
     if (saved === 'ko' || saved === 'en') {
       setLangState(saved);
