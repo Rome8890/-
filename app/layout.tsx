@@ -76,9 +76,11 @@ export default function RootLayout({
             <div className="max-w-3xl mx-auto space-y-1.5">
               <div className="font-bold text-gray-800 text-sm">장충금헌터 (Jang-chung-geum Hunter)</div>
               <div>서비스 상품: 장충금 내용증명서 서식 자동 생성 소프트웨어 | 상품 가격: 4,900원 (VAT 포함)</div>
-              <div>대표: 이진영 | 사업자등록번호: 361-70-00626 | 통신판매업신고: 전자상거래 소매업 | 고객센터: 010-8381-8548</div>
-              <div>사업장 주소: 대구광역시 북구 고성로 172-1, 505호(고성동2가, 삼부빌) | 이메일: info@longtermrefund.site</div>
+              <div>상호명: 장충금헌터 | 대표: 이진영 | 사업자등록번호: 361-70-00626 | 통신판매업신고: 전자상거래 소매업</div>
+              <div>사업장 주소: 대구광역시 북구 고성로 172-1, 505호(고성동2가, 삼부빌) | 전화번호: 010-8381-8548 | 이메일: info@longtermrefund.site</div>
               <div className="pt-2 flex items-center justify-center gap-3 font-semibold text-gray-600">
+                <a href="/about" className="hover:underline text-blue-600">서비스 소개</a>
+                <span>|</span>
                 <a href="/terms" className="hover:underline text-blue-600">이용약관</a>
                 <span>|</span>
                 <a href="/privacy" className="hover:underline text-blue-600">개인정보처리방침</a>

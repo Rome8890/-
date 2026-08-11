@@ -540,9 +540,16 @@ export default function CheckoutPage() {
         {/* 법적 사업자 정보 푸터 (전자상거래법 & PG 심사 필수 준수) */}
         <footer className="mt-12 pt-8 pb-10 border-t border-gray-200 text-center text-xs text-gray-500 space-y-2">
           <div className="font-bold text-gray-800">장충금헌터 (Jang-chung-geum Hunter)</div>
-          <div>대표: 이진영 | 사업자등록번호: 361-70-00626 | 고객센터: 010-8381-8548</div>
+          <div>상호명: 장충금헌터 | 대표: 이진영 | 사업자등록번호: 361-70-00626 | 전화번호: 010-8381-8548</div>
           <div>사업장 주소: 대구광역시 북구 고성로 172-1, 505호(고성동2가, 삼부빌)</div>
           <div>통신판매업신고: 전자상거래 소매업 | 이메일: info@longtermrefund.site</div>
+          <div className="pt-1 flex items-center justify-center gap-2 text-blue-600 font-medium">
+            <a href="/about" className="hover:underline">서비스 소개</a>
+            <span>|</span>
+            <a href="/terms" className="hover:underline">이용약관</a>
+            <span>|</span>
+            <a href="/privacy" className="hover:underline">개인정보처리방침</a>
+          </div>
           <div className="text-[11px] text-gray-400 mt-2">
             ※ 본 서비스는 전자적 서식 작성 자동화 소프트웨어이며, 법률 자문이나 법률 대리를 제공하지 않습니다.
           </div>
