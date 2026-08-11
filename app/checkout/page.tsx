@@ -120,7 +120,7 @@ export default function CheckoutPage() {
 
       IMP.request_pay(
         {
-          pg: 'kakaopay.TC0ONETIME',
+          pg: 'kcp.IPA14',
           pay_method: 'card',
           merchant_uid: order.orderId,
           name: order.orderName,
