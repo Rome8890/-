@@ -186,7 +186,8 @@ export default function CheckoutPage() {
       const storeCode = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'imp70346022';
       IMP.init(storeCode);
 
-      const pgCode = process.env.NEXT_PUBLIC_PORTONE_PG || 'kakaopay.TC0ONETIME';
+      // PortOne V1 스토어(imp70346022) 등록 채널: kcp.IPA14 (환경변수 지정 시 해당 PG 우선 사용)
+      const pgCode = process.env.NEXT_PUBLIC_PORTONE_PG || 'kcp.IPA14';
 
       IMP.request_pay(
         {
@@ -209,7 +210,9 @@ export default function CheckoutPage() {
             window.location.href = `/payment/success?paymentKey=${rsp.imp_uid || 'portone'}&orderId=${rsp.merchant_uid}&amount=${order.amount}`;
           } else {
             setIsPaying(false);
-            setOrderError(rsp.error_msg || '결제가 취소되었습니다.');
+            if (rsp.error_msg && !rsp.error_msg.includes('취소')) {
+              setOrderError(rsp.error_msg);
+            }
           }
         }
       );
