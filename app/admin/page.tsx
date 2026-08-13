@@ -103,10 +103,20 @@ export default function AdminPage() {
   const today = new Date().toDateString();
   const todayReal = realEvents.filter(ev => new Date(ev.created_at).toDateString() === today);
   const uniqueSessions = new Set(realEvents.map(ev => ev.metadata?.session_id).filter(Boolean)).size;
-  const paymentClicks = realEvents.filter(ev => ev.event_type === 'click_payment').length;
+  const paymentClickEvents = realEvents.filter(ev => ev.event_type === 'click_payment');
+  const paymentClicks = paymentClickEvents.length;
   const paymentSuccess = realEvents.filter(ev => ev.event_type === 'payment_success').length;
   const calcClicks = realEvents.filter(ev => ev.event_type === 'click_calculate').length;
   const convRate = paymentClicks > 0 ? ((paymentSuccess / paymentClicks) * 100).toFixed(0) : '0';
+
+  // 결제 수단별 세부 분석
+  const portoneClicks = paymentClickEvents.filter(ev => ev.metadata?.payment_method === 'portone_kakaopay').length;
+  const tossClicks = paymentClickEvents.filter(ev => ev.metadata?.payment_method === 'toss').length;
+  const paypalClicks = paymentClickEvents.filter(ev => ev.metadata?.payment_method === 'paypal').length;
+  
+  // 국내 vs 해외 유저 분석
+  const krClicks = paymentClickEvents.filter(ev => ev.metadata?.country === 'KR' || ev.metadata?.lang === 'ko').length;
+  const foreignClicks = paymentClickEvents.filter(ev => (ev.metadata?.country && ev.metadata?.country !== 'KR') || ev.metadata?.lang === 'en').length;
 
   if (!authed) {
     return (
@@ -164,11 +174,40 @@ export default function AdminPage() {
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 16px' }}>
 
         {/* 통계 카드 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
           <StatCard icon={<Users size={16} />} label="고유 세션 (7일)" value={uniqueSessions} sub="개발자 제외" color="#0001bb" />
           <StatCard icon={<MousePointerClick size={16} />} label="계산 완료 (7일)" value={calcClicks} sub="실제 사용자" color="#7c3aed" />
           <StatCard icon={<CreditCard size={16} />} label="결제 버튼 클릭" value={paymentClicks} sub={`오늘 ${todayReal.filter(e=>e.event_type==='click_payment').length}건`} color="#dc2626" />
           <StatCard icon={<TrendingUp size={16} />} label="실제 결제 성공" value={`${paymentSuccess}건 (${convRate}%)`} sub="클릭 → 결제 전환율" color="#059669" />
+        </div>
+
+        {/* 결제 수요검증 세부 분석 패널 */}
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '14px', padding: '16px 20px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#111', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>🎯</span> 결제버튼 수요검증 (PG 수단 & 타겟 지역별 분석)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+            <div style={{ background: '#fffbe6', padding: '10px 14px', borderRadius: '10px', border: '1px solid #ffe58f' }}>
+              <div style={{ fontSize: '11px', color: '#873800', fontWeight: 600 }}>카카오페이/포트원</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#d48800' }}>{portoneClicks}회</div>
+            </div>
+            <div style={{ background: '#e6f7ff', padding: '10px 14px', borderRadius: '10px', border: '1px solid #91d5ff' }}>
+              <div style={{ fontSize: '11px', color: '#0050b3', fontWeight: 600 }}>토스 페이먼츠</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#096dd9' }}>{tossClicks}회</div>
+            </div>
+            <div style={{ background: '#f0f0ff', padding: '10px 14px', borderRadius: '10px', border: '1px solid #bec2ff' }}>
+              <div style={{ fontSize: '11px', color: '#0001bb', fontWeight: 600 }}>해외 PayPal</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#0001bb' }}>{paypalClicks}회</div>
+            </div>
+            <div style={{ background: '#f6ffed', padding: '10px 14px', borderRadius: '10px', border: '1px solid #b7eb8f' }}>
+              <div style={{ fontSize: '11px', color: '#389e0d', fontWeight: 600 }}>국내 접속자 (KR)</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#237804' }}>{krClicks}회</div>
+            </div>
+            <div style={{ background: '#fff0f6', padding: '10px 14px', borderRadius: '10px', border: '1px solid #ffadd2' }}>
+              <div style={{ fontSize: '11px', color: '#c41d7f', fontWeight: 600 }}>해외/영문 유저</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#9e1068' }}>{foreignClicks}회</div>
+            </div>
+          </div>
         </div>
 
         {/* 필터 바 */}

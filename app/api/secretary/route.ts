@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const BOT_TOKEN    = process.env.SECRETARY_BOT_TOKEN!;
-const GEMINI_KEY   = process.env.GEMINI_API_KEY!;
+export const dynamic = 'force-dynamic';
+
+const BOT_TOKEN    = process.env.SECRETARY_BOT_TOKEN || '';
+const GEMINI_KEY   = process.env.GEMINI_API_KEY || '';
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const LAW_OC       = process.env.LAW_OC || 'law8899';
-const SB_URL       = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SB_KEY       = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SB_URL       = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const SB_KEY       = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
 const SERVICE_BASE = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
 const GH_PAT       = process.env.GH_PAT || '';
 const GH_REPO      = 'Rome8890/jangchoonggeum-hunter';

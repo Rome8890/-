@@ -58,10 +58,77 @@ export default function CheckoutPage() {
     } catch {}
   }, []);
 
+  // 언어 설정에 따른 기본 결제 탭 자동 선택
+  useEffect(() => {
+    if (lang === 'en') {
+      setMode('paypal');
+    } else {
+      setMode('portone');
+    }
+  }, [lang]);
+
+  // 페이지 진입 트래킹
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        await fetch('/api/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'view_checkout',
+            metadata: {
+              lang,
+              is_dev: typeof window !== 'undefined' && localStorage.getItem('jcg_dev') === '1',
+            },
+            path: '/checkout',
+          }),
+        });
+      } catch {}
+    };
+    trackView();
+  }, [lang]);
+
   const fields = [myName, myAddr, myAccount, llName, llAddr, aptName, contractStart, contractEnd];
   const filled = fields.filter(Boolean).length;
   const pct = Math.round((filled / fields.length) * 100);
   const isComplete = filled === fields.length;
+
+  const trackPaymentClick = async (paymentMethod: string) => {
+    const isDev = typeof window !== 'undefined' && localStorage.getItem('jcg_dev') === '1';
+    const eventData = {
+      payment_method: paymentMethod,
+      lang,
+      refund_total: refundInfo?.total || 0,
+      form_completed_pct: pct,
+      privacy_agreed: privacyAgreed,
+      is_dev: isDev,
+      referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+    };
+
+    // 1. PostHog Client Logging
+    try {
+      if (typeof window !== 'undefined' && (window as any).posthog) {
+        (window as any).posthog.capture('click_payment', eventData);
+      }
+    } catch (err) {
+      console.warn('PostHog tracking warning:', err);
+    }
+
+    // 2. Supabase DB Dual Logging
+    try {
+      await fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'click_payment',
+          metadata: eventData,
+          path: '/checkout',
+        }),
+      });
+    } catch (err) {
+      console.warn('Supabase DB tracking warning:', err);
+    }
+  };
 
   const savePdfData = () => {
     sessionStorage.setItem('jcg_user_data', JSON.stringify({
@@ -86,6 +153,7 @@ export default function CheckoutPage() {
       return;
     }
     setIsPaying(true);
+    await trackPaymentClick('portone_kakaopay');
     try {
       savePdfData();
       const phoneDigits = recvPhone.replace(/\D/g, '');
@@ -115,12 +183,14 @@ export default function CheckoutPage() {
 
       await loadIamport();
       const IMP = (window as any).IMP;
-      const storeCode = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'imp00000000';
+      const storeCode = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || 'imp70346022';
       IMP.init(storeCode);
+
+      const pgCode = process.env.NEXT_PUBLIC_PORTONE_PG || 'kakaopay.TC0ONETIME';
 
       IMP.request_pay(
         {
-          pg: 'kcp.IPA14',
+          pg: pgCode,
           pay_method: 'card',
           merchant_uid: order.orderId,
           name: order.orderName,
@@ -156,6 +226,7 @@ export default function CheckoutPage() {
       return;
     }
     setIsPaying(true);
+    await trackPaymentClick('toss');
     try {
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
@@ -204,6 +275,7 @@ export default function CheckoutPage() {
       return;
     }
     setIsPaying(true);
+    await trackPaymentClick('payapp');
     try {
       savePdfData();
       const res = await fetch('/api/payment/payapp/create-order', {
@@ -480,6 +552,7 @@ export default function CheckoutPage() {
                     setOrderError(lang === 'ko' ? '개인정보 수집 및 이용에 동의해 주세요.' : 'Please agree to the Collection and Use of Personal Information.');
                     throw new Error('Privacy consent required');
                   }
+                  await trackPaymentClick('paypal');
                   savePdfData();
                   const res = await fetch('/api/payment/paypal/create-order', {
                     method: 'POST',
