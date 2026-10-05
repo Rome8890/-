@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from 'next/script';
+import { InquiryModal } from '@/components/InquiryModal';
 
 export default function RootLayout({
   children,
@@ -68,9 +69,9 @@ export default function RootLayout({
             })(window, document, "clarity", "script", "wt1lm4ph25");
           `}
         </Script>
-        
         <PHProvider>
           {children}
+          <InquiryModal />
           {/* 포트원 & KCP 준수 전역 풋터 (사용자 경험 최우선 디자인) */}
           <footer className="w-full bg-slate-900 text-slate-400 border-t border-slate-800 py-10 px-4 text-xs font-sans">
             <div className="max-w-4xl mx-auto space-y-4">
