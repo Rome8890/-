@@ -3,17 +3,27 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-const BOT_TOKEN    = process.env.SECRETARY_BOT_TOKEN || '';
+const BOT_TOKEN    = process.env.SECRETARY_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
 const GEMINI_KEY   = process.env.GEMINI_API_KEY || '';
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const LAW_OC       = process.env.LAW_OC || 'law8899';
-const SB_URL       = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const SB_KEY       = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
-const SERVICE_BASE = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
+const SB_URL       = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://baqzsbcoljtlbvuxldgy.supabase.co';
+const SB_KEY       = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const SERVICE_BASE = 'https://www.longtermrefund.site';
 const GH_PAT       = process.env.GH_PAT || '';
 const GH_REPO      = 'Rome8890/jangchoonggeum-hunter';
 
 const supabase = createClient(SB_URL, SB_KEY);
+
+// ── 네이버 답변작성 에디터 직행 링크 ───────────────────
+function buildWriteUrl(link: string): string {
+  const dirMatch = link.match(/dirId=(\d+)/);
+  const docMatch = link.match(/docId=(\d+)/);
+  if (dirMatch && docMatch) {
+    return `https://kin.naver.com/qna/answerWrite.naver?dirId=${dirMatch[1]}&docId=${docMatch[1]}`;
+  }
+  return link;
+}
 
 // ── 법령 MCP 조회 ──────────────────────────────────
 async function fetchLawContext(query: string): Promise<string> {
@@ -44,11 +54,9 @@ async function fetchLawContext(query: string): Promise<string> {
   } catch { return ''; }
 }
 
-const SERVICE_BASE_URL = 'https://jangchoonggim-jyl1256-gmailcoms-projects.vercel.app';
+const SERVICE_BASE_URL = 'https://www.longtermrefund.site';
 
 // ── 질문 유형 분류 → qid ────────────────────────────
-// qid=1: 집주인 거부형 (임차인, 집주인이 반환 거부)
-// qid=2: 이사 준비형 (임차인, 이사 예정/전세보증금 포함)
 function classifyQid(title: string, body: string): number {
   const text = title + ' ' + body;
   if (['안 준다', '안줘', '거부', '못 받', '못받', '안돌려', '버티', '안 돌려'].some(k => text.includes(k))) return 1;
@@ -59,52 +67,70 @@ function classifyQid(title: string, body: string): number {
 async function generateFull(
   questionTitle: string, questionBody: string,
   feedback: string, prevAnswer: string, lawContext: string,
-  serviceQid?: number
+  serviceQid?: number, tone: string = 'standard'
 ): Promise<{ answer: string; tag: string; verdict: string; legalSummary: object[]; actionSteps: object[] } | null> {
   const qid = serviceQid ?? classifyQid(questionTitle, questionBody);
   const SERVICE_LINK = `${SERVICE_BASE_URL}/?from=jisikin&qid=${qid}`;
 
-  const isRegen = !!feedback || !!prevAnswer;
+  const isRegen = !!feedback || !!prevAnswer || tone !== 'standard';
+
+  let toneGuidance = '';
+  if (tone === 'friendly') {
+    toneGuidance = `
+[특별 톤 요청: 세입자 공감 & 친절형]
+- 세입자의 막막함에 따뜻하게 공감하며, 친절하고 부드러운 어조로 답변하세요.
+- 어려운 법률 용어는 괄호로 쉬운 일상어로 풀어서 안내하세요.`;
+  } else if (tone === 'aggressive') {
+    toneGuidance = `
+[특별 톤 요청: 초강력 법률·내용증명형]
+- 민법 제162조 제1항 채권 소멸시효 10년 규정과 공동주택관리법 강행규정을 강력히 강조하세요.
+- 내용증명 발송 즉시 잠정 시효중단 및 6개월 내 소액심판 제기 시 소송촉진법상 연 12% 지연이자, 통장 압류 및 강제집행 가능성을 명시하여 단호하고 강경하게 작성하세요.`;
+  } else if (tone === 'concise') {
+    toneGuidance = `
+[특별 톤 요청: 3줄 핵심 요약형]
+- 군더더기를 싹 빼고 [1. 법적 반환 권리 / 2. 청구 가능 기한(10년) / 3. 오늘 당장 해야 할 3단계] 핵심만 450~650자 내외로 명쾌하게 정리하세요.`;
+  }
+
   const regenSection = isRegen ? `
-[이전 답변 — 이것보다 반드시 더 나은 답변을 작성하세요]
-${prevAnswer}
+[이전 답변 참고]
+${prevAnswer ? prevAnswer.slice(0, 1500) : ''}
 
 [개선 지시사항]
-${feedback || '전반적으로 더 상세하고 설득력 있게, 법령 근거를 더 구체적으로 인용하여 개선하세요.'}
+${feedback || '더 상세하고 설득력 있게, 실제 임차인에게 최적화된 맞춤형 솔루션으로 작성하세요.'}
+${toneGuidance}
 ` : '';
 
   const prompt = `당신은 임차인 권리 전문 법률 자문가입니다. 장기수선충당금·전세보증금 반환 분야에서 임차인 승소율 97%를 기록한 전문가입니다.
 
 [실제 법령 원문 — 반드시 조항번호와 함께 직접 인용하세요]
-${lawContext || '공동주택관리법 제30조 제2항: 소유자는 임차인이 대납한 장기수선충당금을 임대차 종료 시 반환하여야 한다. (강행규정, 특약으로 배제 불가)'}
+${lawContext || '공동주택관리법 제30조 제1항: 장기수선충당금은 해당 공동주택의 소유자로부터 징수하여 적립한다.\n공동주택관리법 시행령 제31조 제7항: 소유자는 임차인이 대신 납부한 장기수선충당금을 반환하여야 한다.'}
 ${regenSection}
 [질문]
 제목: ${questionTitle}
 내용: ${questionBody}
 
 [answer 필드 절대 규칙]
-① 첫 문장: "네, 가능합니다" / "즉시 청구하세요" / "전액 반환받을 수 있습니다" 중 하나로 시작 (조건부 표현 절대 금지)
-② 법령 조항번호 직접 인용 (예: 공동주택관리법 제30조 제2항)
-③ 질문자 상황에 맞춘 구체적 조언 (일반론 금지)
-④ 내용증명 발송 안내 포함
-⑤ 마지막 줄: "내용증명서가 필요하시면 → ${SERVICE_LINK}"
-⑥ 600~900자 사이로 충분히 상세하게 작성
-${isRegen ? '⑦ 이전 답변보다 반드시 더 구체적이고 상세하게 작성할 것' : ''}
+① 첫 문장: "네, 전액 반환받을 수 있습니다." / "지금 즉시 청구하셔야 합니다." 등 단정적 결론으로 시작
+② 법령 조항번호 직접 인용 (공동주택관리법 제30조 제1항, 동법 시행령 제31조 제7항, 민법 제162조 10년 소멸시효 등)
+③ 질문자 상황(거주 기간, 이사 여부 등)에 맞춘 구체적 조언
+④ 내용증명 발송 및 지연이자(민법 5%, 소송촉진법 12%) 안내
+⑤ 마지막 줄: "무료 내용증명서 자동 생성 → ${SERVICE_LINK}"
+⑥ 읽기 편한 단락 구분과 번호 목록 활용
 
 아래 JSON 형식으로만 응답 (순수 JSON, 코드블록 없이):
 {
-  "answer": "위 규칙을 모두 준수한 고품질 네이버 지식인 답변",
-  "tag": "집주인 거부형 또는 이사 준비형 또는 전세보증금형",
+  "answer": "위 규칙을 모두 준수한 고품질 네이버 지식인 등록용 답변",
+  "tag": "집주인 거부형 또는 이사 준비형 또는 시효청구형",
   "verdict": "핵심 결론 한 문장 (강하고 단정적으로)",
   "legalSummary": [
-    {"type":"law","badge":"법령","cite":"정확한 법령명과 조항번호","quote":"실제 조문 원문 그대로","point":"이 조항이 질문자에게 유리한 이유"},
-    {"type":"precedent","badge":"법원 판결","cite":"확립된 판례 법리","quote":"판결 요지","point":"이 사건에 적용되는 포인트"},
-    {"type":"remedy","badge":"법적 수단","cite":"소액심판 또는 지급명령","quote":"절차 안내","point":"인지대/기간/승소율"}
+    {"type":"law","badge":"핵심 법령","cite":"공동주택관리법 시행령 제31조 제7항","quote":"소유자는 임차인이 대신 납부한 금액을 반환하여야 한다","point":"임차인 반환 청구의 직접적 법적 근거"},
+    {"type":"law","badge":"소멸시효","cite":"민법 제162조 제1항","quote":"채권은 10년간 행사하지 아니하면 소멸시효가 완성한다","point":"이사 후 최대 10년 전 대납금까지 전액 청구 가능"},
+    {"type":"remedy","badge":"법적 수단","cite":"소액사건심판법","quote":"3,000만원 이하 간이 소송","point":"신청비 약 1만원, 2~3개월 내 신속 판결"}
   ],
   "actionSteps": [
-    {"timing":"오늘 바로","icon":"📋","action":"질문자 상황에 맞는 구체적 행동"},
-    {"timing":"이번 주 내","icon":"📮","action":"내용증명 발송 관련 구체적 행동"},
-    {"timing":"거부/미이행 시","icon":"⚖️","action":"소송 절차 구체적 안내"}
+    {"timing":"오늘 바로","icon":"📋","action":"관리사무소 납부확인서 발급 및 대상 금액 산출"},
+    {"timing":"이번 주 내","icon":"📮","action":"내용증명서 우체국 등기 발송"},
+    {"timing":"미반환 시","icon":"⚖️","action":"소액심판 청구 및 연 12% 지연이자 청구"}
   ]
 }`;
 
@@ -121,7 +147,7 @@ ${isRegen ? '⑦ 이전 답변보다 반드시 더 구체적이고 상세하게 
     }
   );
   if (res.status === 429) {
-    await tg('sendMessage', { chat_id: Number(process.env.TELEGRAM_CHAT_ID),
+    await tg('sendMessage', { chat_id: Number(process.env.TELEGRAM_CHAT_ID || '8865095008'),
       text: '⚠️ Gemini API 오늘 할당량 소진\n새 키 교체가 필요합니다.\n내일 자정 자동 리셋됩니다.' });
     return null;
   }
@@ -145,25 +171,74 @@ async function tg(method: string, body: object) {
   });
 }
 
-async function sendDraft(chatId: number, questionTitle: string, questionUrl: string,
-  answer: string, qid: number, rowId: string, version: number) {
+// ── 잘림 방지 스마트 분할 전송 (1글자도 끊김 없는 완전 전송) ────
+async function sendChunked(chatId: number, text: string) {
+  if (!text) return;
+  if (text.length <= 4000) {
+    return tg('sendMessage', { chat_id: chatId, text });
+  }
+  let remaining = text;
+  let part = 1;
+  const totalParts = Math.ceil(text.length / 4000);
+  while (remaining.length > 0) {
+    if (remaining.length <= 4000) {
+      const prefix = totalParts > 1 ? `📋 [답변 본문 Part ${part}/${totalParts}]\n\n` : '';
+      await tg('sendMessage', { chat_id: chatId, text: prefix + remaining });
+      break;
+    }
+    let splitIdx = remaining.lastIndexOf('\n\n', 4000);
+    if (splitIdx === -1 || splitIdx < 1500) {
+      splitIdx = remaining.lastIndexOf('\n', 4000);
+    }
+    if (splitIdx === -1 || splitIdx < 1500) {
+      splitIdx = 4000;
+    }
+    const chunk = remaining.slice(0, splitIdx).trim();
+    remaining = remaining.slice(splitIdx).trim();
+    await tg('sendMessage', { chat_id: chatId, text: `📋 [답변 본문 Part ${part}/${totalParts}]\n\n` + chunk });
+    part++;
+  }
+}
+
+// ── 원클릭 UX를 위한 2개 메시지 분리 전송 ─────────────
+async function sendDraft(
+  chatId: number, questionTitle: string, questionUrl: string,
+  answer: string, qid: number, rowId: string, version: number, verdict?: string
+) {
   const serviceUrl = `${SERVICE_BASE}/?from=jisikin&qid=${qid}`;
+  const writeUrl = buildWriteUrl(questionUrl);
+
+  const cardText =
+    `🎯 [장충금 헌터] 답변 v${version} 준비완료 ✨\n\n` +
+    `📌 질문: ${questionTitle}\n` +
+    `💡 진단: ${verdict || '임차인 전액 반환 청구 가능 (승소율 97%)'}\n\n` +
+    `👇 아래 [✍️ 네이버 답변창 열기]를 누르고, 다음 메시지의 답변을 복사해서 붙여넣으세요!\n` +
+    `🆔 ${rowId}`;
+
+  // 1. 안내 & 원클릭 버튼 카드 발송
   await tg('sendMessage', {
     chat_id: chatId,
-    text: `📝 [답변 v${version} 준비완료]\n\n📌 ${questionTitle}\n🔗 질문링크: ${questionUrl}\n\n${answer}\n\n📎 맞춤 서비스링크 (qid=${qid}): ${serviceUrl}\n🆔 ${rowId}\n\n✏️ 수정하려면 이 메시지에 Reply로 요청하세요`,
+    text: cardText,
     reply_markup: {
       inline_keyboard: [
         [
-          { text: '📋 답변 복사',  callback_data: `copy:${rowId}` },
-          { text: '🔄 재생성',     callback_data: `regen:${rowId}` },
+          { text: '✍️ 네이버 답변창 열기', url: writeUrl },
+          { text: '🌐 장충금 헌터 웹', url: serviceUrl }
         ],
         [
-          { text: '🚀 지식인 자동 등록', callback_data: `post:${rowId}` },
-          { text: '✅ 등록완료 확인',    callback_data: `approve:${rowId}` },
+          { text: '🌿 친절·공감 톤', callback_data: `regen:${rowId}:friendly` },
+          { text: '⚖️ 강력 법률 톤', callback_data: `regen:${rowId}:aggressive` }
+        ],
+        [
+          { text: '⚡ 3줄 요약 톤', callback_data: `regen:${rowId}:concise` },
+          { text: '✅ 등록완료 확인', callback_data: `approve:${rowId}` }
         ]
       ]
     }
   });
+
+  // 2. 단독 복사용 순수 답변 메시지 발송 (터치 한 번으로 1초 복사)
+  await sendChunked(chatId, answer);
 }
 
 // ── GitHub Actions workflow_dispatch 트리거 ───────────
@@ -245,14 +320,14 @@ export async function POST(request: Request) {
     // ── 버튼 콜백 처리 ──
     if (update.callback_query) {
       const cq = update.callback_query;
-      const [action, rowId] = cq.data.split(':');
+      const [action, rowId, tone] = (cq.data || '').split(':');
       const chatId: number = cq.message.chat.id;
 
       await tg('answerCallbackQuery', { callback_query_id: cq.id });
 
       if (action === 'approve') {
         await supabase.from('jisikin_answers').update({ status: 'posted' }).eq('id', rowId);
-        await tg('sendMessage', { chat_id: chatId, text: '✅ 등록 완료로 기록했습니다! 수고하셨습니다 💖' });
+        await tg('sendMessage', { chat_id: chatId, text: '✅ 등록 완료로 기록했습니다! 고생하셨습니다 대표님 💖' });
       }
 
       if (action === 'copy') {
@@ -260,10 +335,7 @@ export async function POST(request: Request) {
         if (!row) return NextResponse.json({ ok: true });
         const qidCopy = classifyQid(row.question_title, row.question_body || '');
         const serviceUrl = `${SERVICE_BASE}/?from=jisikin&qid=${qidCopy}`;
-        await tg('sendMessage', {
-          chat_id: chatId,
-          text: `${row.answer_text}\n\n내용증명서 무료 발급 → ${serviceUrl}`
-        });
+        await sendChunked(chatId, `${row.answer_text}\n\n무료 내용증명서 생성 → ${serviceUrl}`);
       }
 
       if (action === 'post') {
@@ -285,11 +357,15 @@ export async function POST(request: Request) {
         const { data: row } = await supabase.from('jisikin_answers').select('*').eq('id', rowId).single();
         if (!row) return NextResponse.json({ ok: true });
 
-        await tg('sendMessage', { chat_id: chatId, text: '🔄 재생성 중...' });
-        const lawCtx = await fetchLawContext('공동주택관리법 제30조 장기수선충당금 임차인 반환');
+        const toneName = tone === 'friendly' ? '🌿 친절·공감' : tone === 'aggressive' ? '⚖️ 초강력 법률' : tone === 'concise' ? '⚡ 3줄 요약' : '표준';
+        await tg('sendMessage', { chat_id: chatId, text: `🔄 [${toneName} 톤]으로 답변을 재생성 중입니다... 잠시만 기다려주세요!` });
+        const lawCtx = await fetchLawContext(row.question_title + ' ' + (row.question_body || ''));
         const qid = classifyQid(row.question_title, row.question_body || '');
-        const result = await generateFull(row.question_title, row.question_body || '', '', row.answer_text, lawCtx, qid);
-        if (!result) return NextResponse.json({ ok: true });
+        const result = await generateFull(row.question_title, row.question_body || '', '', row.answer_text, lawCtx, qid, tone || 'standard');
+        if (!result) {
+          await tg('sendMessage', { chat_id: chatId, text: '❌ 재생성 실패. 잠시 후 다시 시도해주세요.' });
+          return NextResponse.json({ ok: true });
+        }
 
         const newVersion = (row.version || 1) + 1;
         await supabase.from('jisikin_answers').update({
@@ -299,7 +375,7 @@ export async function POST(request: Request) {
         }).eq('id', rowId);
 
         await sendDraft(chatId, row.question_title, row.question_url, result.answer,
-          classifyQid(row.question_title, row.question_body || ''), rowId, newVersion);
+          qid, rowId, newVersion, result.verdict);
       }
       return NextResponse.json({ ok: true });
     }
@@ -406,19 +482,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    // 원본 메시지에서 row ID 추출
+    // 원본 메시지에서 row ID 추출 또는 답변 스니펫으로 매칭
+    let row: any = null;
     const idMatch = replyTo.text.match(/🆔 ([a-f0-9-]{36})/) || replyTo.text.match(/\?id=([a-f0-9-]{36})/);
-    if (!idMatch) {
-      await tg('sendMessage', { chat_id: chatId, text: '⚠️ 답변 ID를 찾을 수 없어요. 원본 답변 메시지에 Reply 해주세요.' });
+    if (idMatch) {
+      const { data } = await supabase.from('jisikin_answers').select('*').eq('id', idMatch[1]).single();
+      row = data;
+    }
+    if (!row) {
+      // 2번째 메시지(순수 답변 본문)에 Reply한 경우: 텍스트 앞부분으로 검색
+      const snippet = replyTo.text.slice(0, 80).replace(/[%_]/g, '');
+      const { data } = await supabase.from('jisikin_answers').select('*').ilike('answer_text', `%${snippet}%`).limit(1);
+      if (data && data.length > 0) {
+        row = data[0];
+      }
+    }
+    if (!row) {
+      // 그래도 없으면 가장 최근 draft 타겟팅
+      const { data } = await supabase.from('jisikin_answers').select('*').order('created_at', { ascending: false }).limit(1);
+      if (data && data.length > 0) {
+        row = data[0];
+      }
+    }
+
+    if (!row) {
+      await tg('sendMessage', { chat_id: chatId, text: '⚠️ 대상 질문을 찾을 수 없어요. 최신 질문 알림 후 다시 시도해주세요.' });
       return NextResponse.json({ ok: true });
     }
-    const rowId = idMatch[1];
-
-    const { data: row } = await supabase.from('jisikin_answers').select('*').eq('id', rowId).single();
-    if (!row) return NextResponse.json({ ok: true });
+    const rowId = row.id;
 
     await tg('sendChatAction', { chat_id: chatId, action: 'typing' });
-    await tg('sendMessage', { chat_id: chatId, text: `✏️ 피드백 반영 중...\n"${userText.slice(0, 50)}"` });
+    await tg('sendMessage', { chat_id: chatId, text: `✏️ 대표님 피드백 반영 중...\n"${userText.slice(0, 50)}"` });
 
     const lawCtx = await fetchLawContext('공동주택관리법 제30조 장기수선충당금 임차인 반환');
     const qidFeedback = classifyQid(row.question_title, row.question_body || '');
