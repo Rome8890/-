@@ -15,12 +15,12 @@ const GH_REPO      = 'Rome8890/jangchoonggeum-hunter';
 
 const supabase = createClient(SB_URL, SB_KEY);
 
-// ── 네이버 답변작성 에디터 직행 링크 ───────────────────
+// ── 네이버 답변작성 에디터 직행 링크 (PC/모바일 정상 작동) ───────────────────
 function buildWriteUrl(link: string): string {
   const dirMatch = link.match(/dirId=(\d+)/);
   const docMatch = link.match(/docId=(\d+)/);
   if (dirMatch && docMatch) {
-    return `https://kin.naver.com/qna/answerWrite.naver?dirId=${dirMatch[1]}&docId=${docMatch[1]}`;
+    return `https://kin.naver.com/qna/detail.naver?dirId=${dirMatch[1]}&docId=${docMatch[1]}#answerButtonArea`;
   }
   return link;
 }
