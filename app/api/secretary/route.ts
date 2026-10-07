@@ -8,11 +8,7 @@ const DEFAULT_GEMINI_KEY = Buffer.from('QVEuQWI4Uk42Slh5WmhfV005b2huNGlsMFZqQzJW
 const DEFAULT_SB_URL = 'https://baqzsbcoljtlbvuxldgy.supabase.co';
 const DEFAULT_SB_KEY = Buffer.from('ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmFZbXF6WW1OdmJtcDBiR0oyZFhoSlpIZDVJaXdpY205c1pTSTZJbUZ1YjI0aUxDSnBZWFFpT2pFM056ZzRPVE14TURJc0ltVjRjQ0k2TWpBNU5EUTJPVEV3TW4wLkhTNjdrUk5vc0xIWFhfamJjWlotaHNBRzZBMnkxWUxzNEYycmFCX0F0YUVr', 'base64').toString('utf-8');
 
-const BOT_TOKEN    = (process.env.SECRETARY_BOT_TOKEN && process.env.SECRETARY_BOT_TOKEN.length > 20) 
-                     ? process.env.SECRETARY_BOT_TOKEN 
-                     : (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_BOT_TOKEN.length > 20) 
-                       ? process.env.TELEGRAM_BOT_TOKEN 
-                       : DEFAULT_BOT_TOKEN;
+const BOT_TOKEN    = DEFAULT_BOT_TOKEN;
 const GEMINI_KEY   = (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length > 20) 
                      ? process.env.GEMINI_API_KEY 
                      : DEFAULT_GEMINI_KEY;
@@ -542,12 +538,23 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  let testSendResult = null;
+  if (searchParams.get('test') === '1') {
+    const res = await tg('sendMessage', {
+      chat_id: 8865095008,
+      text: '✨ [카리나] Vercel 클라우드 ➔ 텔레그램 정상 연결 확인 완료! 🚀'
+    });
+    testSendResult = await res.json().catch(e => ({ error: String(e) }));
+  }
+
   return NextResponse.json({
     status: '비서봇 Webhook Active ✅',
     botTokenConfigured: !!BOT_TOKEN,
     botTokenPrefix: BOT_TOKEN ? BOT_TOKEN.slice(0, 8) + '...' : 'none',
     geminiKeyConfigured: !!GEMINI_KEY,
-    supabaseConfigured: !!SB_KEY
+    supabaseConfigured: !!SB_KEY,
+    testSendResult
   });
 }
